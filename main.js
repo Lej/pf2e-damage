@@ -227,11 +227,13 @@ function simulate(input) {
 
     for (let i = 0; i < 10; i++) {
       let currentStateName = strategy.start;
-      let currentState = strategy.states[currentStateName];
       let handbreak = 100;
       while (true) {
 
         console.log("currentStateName", currentStateName);
+
+        let currentState = strategy.states[currentStateName];
+        console.log("currentState", currentState);
 
         let d20Roll = null;
         let checkCode = stateCheckCodes[currentStateName];
@@ -269,19 +271,14 @@ function simulate(input) {
         const transition = getTransition(currentState.transitions, degreeOfSuccess);
         console.log("transition", transition);
 
+        currentStateName = transition.destination;
+
         handbreak--;
         if (handbreak === 0) {
           throw new Error(`Evaluation of strategy ${strategyName} did not finish in a timely manner.`);
         }
       }
     }
-
-    currentStateCheckCode =
-
-    console.log(currentStateCheckCode);
-
-    const result = eval(currentStateCheckCode);
-    console.log(result);
   }
 }
 

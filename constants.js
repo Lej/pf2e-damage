@@ -7,13 +7,15 @@ export const defaultInput = {
           strength: "boosts(level, 0)",
           proficiency: "proficiency(level, 'fighter')",
           ac: "ac(level, 'moderate')",
-          map: -5
+          map: -5,
+          weaponDice: "weaponDice(level, 10)"
         },
         {
           strength: "boosts(level, 0)",
           proficiency: "proficiency(level, 'fighter')",
           ac: "ac(level, 'moderate')",
-          map: -4
+          map: -4,
+          weaponDice: "weaponDice(level, 10)"
         }
       ],
       start: "Strike #1",
@@ -22,6 +24,9 @@ export const defaultInput = {
           check: "d20 + strength + proficiency",
           dc: "ac",
           transitions: {
+       /*     "critical-success": {
+              damage: ""
+            },*/
             "else": {
               destination: "Strike #2"
             }
@@ -102,7 +107,15 @@ export const helpers = {
       return [12, 13, 13, 15, 16, 18, 19, 21, 22, 24, 25, 27, 28, 30, 31, 33, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48][level + 1];
     }
     throw new Error(`AC not implemented: ${type}`);
+  },
+  "weaponDice": function(level, sides) {
+    if (level < 4) {
+      return 1;
+    } else if (level < 12) {
+      return 2;
+    } else if (level < 19) {
+      return 3;
+    }
+    return 4;
   }
-
-
 }

@@ -39,29 +39,6 @@ function getDegreeOfSuccess(roll, value, dc) {
   }
 }
 
-function getTransition(transitions, degreeOfSuccess) {
-  let transition = null;
-  if (degreeOfSuccess === "critical-success") {
-    transition = transitions["critical-success"]
-      || transitions["success"]
-      || transitions["else"];
-  } else if (degreeOfSuccess === "success") {
-    transition = transitions["success"]
-      || transitions["else"];
-  } else if (degreeOfSuccess === "failure") {
-    transition = transitions["failure"]
-      || transitions["else"];
-  } else if (degreeOfSuccess === "critical-failure") {
-    transition = transitions["critical-failure"]
-      || transitions["failure"]
-      || transitions["else"];
-  }
-  if (!transition) {
-    throw new Error("Failed to find transition.");
-  }
-  return transition;
-}
-
 function getHelpers() {
   const helperNames = [];
   const helperImpls = [];
@@ -74,64 +51,91 @@ function getHelpers() {
   return [helperNames, helperImpls];
 }
 
-function getVariables(helperNames, helperImpls, variant, level) {
-  // Calculate values for this variant given level using the helpers
+function getVariableFunctions(variant, helperNames) {
   const variableNames = [];
-  const variableValues = [];
+  const variableFunctions = {};
   for (let variableName in variant) {
     variableNames.push(variableName);
     const impl = `return ${variant[variableName]}`;
     const fn = new Function(...helperNames, "level", impl);
+    //variableFunctions.push(fn);
+    variableFunctions[variableName] = fn;
+  }
+  console.log("variableNames", variableNames);
+  console.log("variableFunctions", variableFunctions);
+  return [variableNames, variableFunctions];
+  //return variableNames;
+
+}
+
+function getVariableValues(variableNames, variableFunctions, helperImpls, level) {
+  const variableValues = [];
+  for (const variableName of variableNames) {
+    const fn = variableFunctions[variableName];
     const value = fn(...helperImpls, level);
     variableValues.push(value);
   }
-  console.log("variableNames", variableNames);
   console.log("variableValues", variableValues);
-  return [variableNames, variableValues];
+  return variableValues;
 }
 
-function runIteration(strategy, variableNames, variableValues) {
+function getTransitions(strategy) {
+  const transitions = {};
+  for (const stateName in strategy.states) {
+    const state = strategy.states[stateName];
+    if (!state.transitions) {
+      transitions[stateName] = {
+        "critical-success": null,
+        "success": null,
+        "failure": null,
+        "critical-failure": null,
+      };
+    } else {
+      transitions[stateName] = {
+        "critical-success": state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"] || null,
+        "success": state.transitions["success"] || state.transitions["else"] || null,
+        "failure": state.transitions["failure"] || state.transitions["else"] || null,
+        "critical-failure": state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"] || null,
+      };
+    }
+  }
+  return transitions;
+}
+
+function runIteration(strategy, transitions, checkFunctions, dcFunctions, variableValues) {
 
   let currentStateName = strategy.start;
   let handbreak = 100;
   while (true) {
 
-    console.log("currentStateName", currentStateName);
+    //console.log("currentStateName", currentStateName);
 
     let currentState = strategy.states[currentStateName];
-    console.log("currentState", currentState);
+    //console.log("currentState", currentState);
 
-    const checkCode = `return ${strategy.states[currentStateName].check}`;
-    console.log("checkCode", checkCode);
     const d20 = roll(1, 20);
-    console.log("d20", d20);
+    //console.log("d20", d20);
 
-    const checkFunction = new Function(...variableNames, "d20", checkCode)
-    const checkResult = checkFunction(...variableValues, d20);
-    console.log("checkResult", checkResult);
+    const checkResult = checkFunctions[currentStateName](...variableValues, d20);
+    //console.log("checkResult", checkResult);
     if (typeof(checkResult) !== "number") {
       throw new Error(`Expected check to return a number but got '${checkResult}':\n\n${checkCode}`);
     }
 
-    const dcCode = `return ${strategy.states[currentStateName].dc}`;
-    console.log("dcCode", dcCode);
-    const dcFunction = new Function(...variableNames, dcCode);
-    const dcResult = dcFunction(...variableValues);
-    console.log("dcResult", dcResult);
+    const dcResult = dcFunctions[currentStateName](...variableValues);
+    //console.log("dcResult", dcResult);
     if (typeof(dcResult) !== "number") {
       throw new Error(`Expected DC to return a number but got '${dcResult}':\n\n${dcCode}`);
     }
 
     const degreeOfSuccess = getDegreeOfSuccess(d20, checkResult, dcResult);
+    //console.log("degreeOfSuccess", degreeOfSuccess);
 
-    console.log("degreeOfSuccess", degreeOfSuccess);
-
-    if (!currentState.transitions) {
+    const transition = transitions[currentStateName][degreeOfSuccess];
+    //console.log("transition", transition);
+    if (!transition) {
       break;
     }
-
-    const transition = getTransition(currentState.transitions, degreeOfSuccess);
-    console.log("transition", transition);
 
     currentStateName = transition.destination;
 
@@ -142,7 +146,7 @@ function runIteration(strategy, variableNames, variableValues) {
   }
 }
 
-export function simulate() {
+export async function simulate() {
 
   const input = JSON.parse(document.getElementById("input").value);
   console.log("input", input);
@@ -151,27 +155,78 @@ export function simulate() {
     throw new Error(`Expected iterations between 1 and 1000 but got ${input.iterations}`);
   }
 
+  const loading = document.getElementById("loading");
+  const loaded = document.getElementById("loaded");
+  loaded.style.width = "0%";
+  loading.classList.remove("d-none");
+  let prevPercent = 0;
+  let percent = 0;
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+  let currentIteration = 0;
+  let totalIterations = 0;
+  for (const strategyName in input.strategies) {
+    const strategy = input.strategies[strategyName];
+    totalIterations += strategy.variants.length * 20 * input.iterations;
+  }
+
   // Helpers
   const [helperNames, helperImpls] = getHelpers();
 
   // Strategies
   for (const strategyName in input.strategies) {
 
-    // Variants
+    // Transitions
     const strategy = input.strategies[strategyName];
+    const transitions = getTransitions(strategy);
+
+    // Variants
     for (const variant of strategy.variants) {
+
+      // Get variant variable names
+      const [variableNames, variableFunctions] = getVariableFunctions(variant, helperNames);
 
       // Levels
       for (let level = 1; level <= 20; level++) {
 
-        // Variables for the variant and level
-        const [variableNames, variableValues] = getVariables(helperNames, helperImpls, variant, level);
+        // Check and DC function for each state can be reused between iterations
+        const checkFunctions = {};
+        const dcFunctions = {};
+        for (const stateName in strategy.states) {
+
+          const state = strategy.states[stateName];
+
+          // Check function
+          const checkCode = `return ${state.check}`;
+          console.log("checkCode", checkCode);
+          checkFunctions[stateName] = new Function(...variableNames, "d20", checkCode);
+
+          // DC function
+          const dcCode = `return ${state.dc}`;
+          console.log("dcCode", dcCode);
+          dcFunctions[stateName] = new Function(...variableNames, dcCode);
+        }
+
+        // Get variant variable values for level
+        const variableValues = getVariableValues(variableNames, variableFunctions, helperImpls, level);
 
         // Iterations
         for (let i = 0; i < input.iterations; i++) {
-          runIteration(strategy, variableNames, variableValues);
+          runIteration(strategy, transitions, checkFunctions, dcFunctions, variableValues);
+
+          currentIteration++;
+          percent = Math.floor(100 * currentIteration / totalIterations);
+          if (percent > prevPercent) {
+            prevPercent = percent;
+            loaded.style.width = percent + "%";
+            await sleep(0);
+          }
+          console.log(percent, currentIteration, totalIterations);
         }
       }
     }
   }
+
+  loading.classList.add("d-none");
+  console.log("Simulation complete");
 }

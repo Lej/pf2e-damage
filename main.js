@@ -4,7 +4,7 @@ import { simulate } from "./simulate.js";
 
 async function click() {
   await updateDiagram();
-  simulate();
+  await simulate();
 }
 
 // Default input
@@ -56,3 +56,5 @@ addDocumentationTable(examples);
 document.getElementById("simulate").addEventListener("click", click);
 click();
 //await updateDiagram();
+
+//console.log = function() {}

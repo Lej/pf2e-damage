@@ -1,0 +1,17 @@
+.centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* don't forget to add prefixes */
+  transform: translate(-50%, -50%);
+}
+
+.loading {
+  height: 3em;
+  background-color: lightgray;
+}
+
+.loaded {
+  height: 3em;
+  background-color: #2255BB;
+}

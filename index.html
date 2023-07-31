@@ -7,14 +7,11 @@
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
       mermaid.initialize({ startOnLoad: false });
-      /*const diagram = document.getElementById("mermaid");
-      const observer = new MutationObserver(function(mutationsList, observer) {
-        mermaid.run();
-      });
-      observer.observe(diagram, {characterData: false, childList: true, attributes: false});*/
     </script>
-    <script type="module" src="main.js"></script>
+    <!-- Marked -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- PF2E Damage -->
+    <script type="module" src="main.js"></script>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -30,8 +27,14 @@
           </form>
         </div>
         <div class="col-8">
+          <label for="mermaid">Strategies</label>
           <pre class="mermaid" id="mermaid"></pre>
         </div>
+      </div>
+    </div>
+    <div class="container-fluid" id="documentation">
+      <div class="row">
+        <h1>Examples:</h1>
       </div>
     </div>
   </body>

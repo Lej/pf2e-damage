@@ -151,8 +151,10 @@ export async function simulate() {
   const input = JSON.parse(document.getElementById("input").value);
   console.log("input", input);
 
-  if (!(input.iterations >= 1 && input.iterations <= 1000)) {
-    throw new Error(`Expected iterations between 1 and 1000 but got ${input.iterations}`);
+  const minIterations = 1;
+  const maxIterations = 10000;
+  if (!(input.iterations >= minIterations && input.iterations <= maxIterations)) {
+    throw new Error(`Expected iterations between ${minIterations} and ${maxIterations} but got ${input.iterations}.`);
   }
 
   const loading = document.getElementById("loading");

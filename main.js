@@ -3,8 +3,29 @@ import { updateDiagram } from "./diagram.js";
 import { simulate } from "./simulate.js";
 
 async function click() {
-  await updateDiagram();
-  await simulate();
+  try {
+    await updateDiagram();
+    await simulate();
+    Toastify({
+      text: "Done",
+      duration: 3000,
+      style: {
+        "color": "white",
+        "border-color": "#003d04",
+        "background": "#006d09"
+      }
+    }).showToast();
+  } catch (e) {
+    Toastify({
+      text: e,
+      duration: 3000,
+      style: {
+        "color": "white",
+        "border-color": "#77161b",
+        "background": "#c9262d"
+      }
+    }).showToast();
+  }
 }
 
 // Default input

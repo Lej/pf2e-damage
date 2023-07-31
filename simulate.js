@@ -119,13 +119,13 @@ function runIteration(strategy, transitions, checkFunctions, dcFunctions, variab
     const checkResult = checkFunctions[currentStateName](...variableValues, d20);
     //console.log("checkResult", checkResult);
     if (typeof(checkResult) !== "number") {
-      throw new Error(`Expected check to return a number but got '${checkResult}':\n\n${checkCode}`);
+      throw new Error(`Expected state '${currentStateName}' check to return a number but got '${checkResult}'.`);
     }
 
     const dcResult = dcFunctions[currentStateName](...variableValues);
     //console.log("dcResult", dcResult);
     if (typeof(dcResult) !== "number") {
-      throw new Error(`Expected DC to return a number but got '${dcResult}':\n\n${dcCode}`);
+      throw new Error(`Expected state '${currentStateName}' DC to return a number but got '${checkResult}'.`);
     }
 
     const degreeOfSuccess = getDegreeOfSuccess(d20, checkResult, dcResult);

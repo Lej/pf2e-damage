@@ -18,7 +18,7 @@ async function click() {
   } catch (e) {
     Toastify({
       text: e,
-      duration: 3000,
+      duration: 10000,
       style: {
         "color": "white",
         "border-color": "#77161b",

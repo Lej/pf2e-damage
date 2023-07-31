@@ -188,26 +188,26 @@ export async function simulate() {
       // Get variant variable names
       const [variableNames, variableFunctions] = getVariableFunctions(variant, helperNames);
 
+      // Check and DC function for each state
+      const checkFunctions = {};
+      const dcFunctions = {};
+      for (const stateName in strategy.states) {
+
+        const state = strategy.states[stateName];
+
+        // Check function
+        const checkCode = `return ${state.check}`;
+        console.log("checkCode", checkCode);
+        checkFunctions[stateName] = new Function(...variableNames, "d20", checkCode);
+
+        // DC function
+        const dcCode = `return ${state.dc}`;
+        console.log("dcCode", dcCode);
+        dcFunctions[stateName] = new Function(...variableNames, dcCode);
+      }
+
       // Levels
       for (let level = 1; level <= 20; level++) {
-
-        // Check and DC function for each state can be reused between iterations
-        const checkFunctions = {};
-        const dcFunctions = {};
-        for (const stateName in strategy.states) {
-
-          const state = strategy.states[stateName];
-
-          // Check function
-          const checkCode = `return ${state.check}`;
-          console.log("checkCode", checkCode);
-          checkFunctions[stateName] = new Function(...variableNames, "d20", checkCode);
-
-          // DC function
-          const dcCode = `return ${state.dc}`;
-          console.log("dcCode", dcCode);
-          dcFunctions[stateName] = new Function(...variableNames, dcCode);
-        }
 
         // Get variant variable values for level
         const variableValues = getVariableValues(variableNames, variableFunctions, helperImpls, level);
@@ -219,11 +219,11 @@ export async function simulate() {
           currentIteration++;
           percent = Math.floor(100 * currentIteration / totalIterations);
           if (percent > prevPercent) {
+            console.log(percent, currentIteration, totalIterations);
             prevPercent = percent;
             loaded.style.width = percent + "%";
             await sleep(0);
           }
-          console.log(percent, currentIteration, totalIterations);
         }
       }
     }

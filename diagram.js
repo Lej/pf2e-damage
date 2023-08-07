@@ -8,10 +8,7 @@ function normalizeDisplayName(...args) {
   return args.map(x => x.replace(/{/g, "[").replace(/}/g, "]").replace(/:+/g, "=").replace(/["]/g, "").replace(/,\b(?! )/g, ", ")).join("<br/>");
 }
 
-export async function updateDiagram() {
-
-  const input = JSON.parse(document.getElementById("input").value);
-  console.log("input", input);
+export async function updateDiagram(input) {
 
   const stateNames = new Set();
 
@@ -22,8 +19,9 @@ export async function updateDiagram() {
   for (const strategyName in input.strategies) {
     const strategy = input.strategies[strategyName];
 
-    for (const variant of strategy.variants) {
+    for (const variantName in strategy.variants) {
 
+      const variant = strategy.variants[variantName];
       const variantJson = JSON.stringify(variant);
       const normalizedVariantDisplayName = normalizeDisplayName(`${strategyName} ${variantJson}`);
       const normalizedVariantName = normalize(strategyName, variantJson);

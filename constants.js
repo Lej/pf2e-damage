@@ -1,23 +1,22 @@
 export const defaultInput = {
-  iterations: 10,
   strategies: {
     "Strikes": {
-      variants: [
-        {
+      variants: {
+        "MAP -5": {
           strength: "boosts(level, 0)",
           proficiency: "proficiency(level, 'fighter')",
           ac: "ac(level, 'moderate')",
           map: -5,
           weaponDice: "weaponDice(level, 10)"
         },
-        {
+        "MAP -10": {
           strength: "boosts(level, 0)",
           proficiency: "proficiency(level, 'fighter')",
           ac: "ac(level, 'moderate')",
           map: -4,
           weaponDice: "weaponDice(level, 10)"
         }
-      ],
+      },
       start: "Strike #1",
       states: {
         "Strike #1": {

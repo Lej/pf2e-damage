@@ -1,5 +1,7 @@
 import { helpers } from "./constants.js";
+import { getTotal, getLoadingBar} from "./loading-bar.js";
 
+/*
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
@@ -11,33 +13,7 @@ function roll(number, sides) {
   }
   return sum;
 }
-
-function getDegreeOfSuccess(roll, value, dc) {
-  let outcome = null;
-  if (value >= dc + 10) {
-    outcome = 3;
-  } else if (value >= dc) {
-    outcome = 2;
-  } else if (value > dc - 10) {
-    outcome = 1;
-  } else {
-    outcome = 0;
-  }
-  if (roll === 1 && outcome > 0) {
-    outcome--;
-  } else if (roll === 20 && outcome < 3) {
-    outcome++;
-  }
-  if (outcome == 3) {
-    return "critical-success";
-  } else if (outcome == 2) {
-    return "success";
-  } else if (outcome == 1) {
-    return "failure";
-  } else {
-    return "critical-failure";
-  }
-}
+*/
 
 function getHelpers() {
   const helperNames = [];
@@ -51,24 +27,16 @@ function getHelpers() {
   return [helperNames, helperImpls];
 }
 
-function getVariableFunctions(variant, helperNames) {
-  const variableNames = [];
+function getVariantVariableFunctions(variant, variableNames, helperNames) {
   const variableFunctions = {};
-  for (let variableName in variant) {
-    variableNames.push(variableName);
-    const impl = `return ${variant[variableName]}`;
-    const fn = new Function(...helperNames, "level", impl);
-    //variableFunctions.push(fn);
-    variableFunctions[variableName] = fn;
+  for (const variableName of variableNames) {
+    variableFunctions[variableName] = new Function(...helperNames, "level", `return ${variant[variableName]}`);
   }
-  console.log("variableNames", variableNames);
   console.log("variableFunctions", variableFunctions);
-  return [variableNames, variableFunctions];
-  //return variableNames;
-
+  return variableFunctions;
 }
 
-function getVariableValues(variableNames, variableFunctions, helperImpls, level) {
+function getVariantVariableValues(variableNames, variableFunctions, helperImpls, level) {
   const variableValues = [];
   for (const variableName of variableNames) {
     const fn = variableFunctions[variableName];
@@ -102,133 +70,138 @@ function getTransitions(strategy) {
   return transitions;
 }
 
-function runIteration(strategy, transitions, checkFunctions, dcFunctions, variableValues) {
+function getCheckFunctions(strategy, variableNames) {
+  const functions = {};
+  for (const stateName in strategy.states) {
+    const state = strategy.states[stateName];
+    const code = `return ${state.check}`;
+    console.log("code", code);
+    functions[stateName] = new Function(...variableNames, "d20", code);
+  }
+  return functions;
+}
 
-  let currentStateName = strategy.start;
-  let handbreak = 100;
-  while (true) {
+function getDcFunctions(strategy, variableNames) {
+  const functions = {};
+  for (const stateName in strategy.states) {
+    const state = strategy.states[stateName];
+    const code = `return ${state.dc}`;
+    console.log("code", code);
+    functions[stateName] = new Function(...variableNames, code);
+  }
+  return functions;
+}
 
-    //console.log("currentStateName", currentStateName);
-
-    let currentState = strategy.states[currentStateName];
-    //console.log("currentState", currentState);
-
-    const d20 = roll(1, 20);
-    //console.log("d20", d20);
-
-    const checkResult = checkFunctions[currentStateName](...variableValues, d20);
-    //console.log("checkResult", checkResult);
-    if (typeof(checkResult) !== "number") {
-      throw new Error(`Expected state '${currentStateName}' check to return a number but got '${checkResult}'.`);
+function getVariantVariableNames(strategy) {
+  const variableNames = [];
+  for (const variantName in strategy.variants) {
+    const variant = strategy.variants[variantName];
+    for (let variableName in variant) {
+      variableNames.push(variableName);
     }
-
-    const dcResult = dcFunctions[currentStateName](...variableValues);
-    //console.log("dcResult", dcResult);
-    if (typeof(dcResult) !== "number") {
-      throw new Error(`Expected state '${currentStateName}' DC to return a number but got '${checkResult}'.`);
-    }
-
-    const degreeOfSuccess = getDegreeOfSuccess(d20, checkResult, dcResult);
-    //console.log("degreeOfSuccess", degreeOfSuccess);
-
-    const transition = transitions[currentStateName][degreeOfSuccess];
-    //console.log("transition", transition);
-    if (!transition) {
-      break;
-    }
-
-    currentStateName = transition.destination;
-
-    handbreak--;
-    if (handbreak === 0) {
-      throw new Error(`Evaluation of strategy ${strategyName} did not finish in a timely manner.`);
-    }
+    console.log("variableNames", variableNames);
+    return variableNames;
   }
 }
 
-export async function simulate() {
-
-  const input = JSON.parse(document.getElementById("input").value);
-  console.log("input", input);
-
-  const minIterations = 1;
-  const maxIterations = 10000;
-  if (!(input.iterations >= minIterations && input.iterations <= maxIterations)) {
-    throw new Error(`Expected iterations between ${minIterations} and ${maxIterations} but got ${input.iterations}.`);
+function getDegreeOfSuccess(roll, value, dc) {
+  let outcome = null;
+  if (value >= dc + 10) {
+    outcome = 3;
+  } else if (value >= dc) {
+    outcome = 2;
+  } else if (value > dc - 10) {
+    outcome = 1;
+  } else {
+    outcome = 0;
   }
-
-  const loading = document.getElementById("loading");
-  const loaded = document.getElementById("loaded");
-  loaded.style.width = "0%";
-  loading.classList.remove("d-none");
-  let prevPercent = 0;
-  let percent = 0;
-  const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-  let currentIteration = 0;
-  let totalIterations = 0;
-  for (const strategyName in input.strategies) {
-    const strategy = input.strategies[strategyName];
-    totalIterations += strategy.variants.length * 20 * input.iterations;
+  if (roll === 1 && outcome > 0) {
+    outcome--;
+  } else if (roll === 20 && outcome < 3) {
+    outcome++;
   }
+  if (outcome == 3) {
+    return "critical-success";
+  } else if (outcome == 2) {
+    return "success";
+  } else if (outcome == 1) {
+    return "failure";
+  } else {
+    return "critical-failure";
+  }
+}
+
+function getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20) {
+
+    const checkResult = checkFunctions[stateName](...variableValues, d20);
+    if (typeof(checkResult) !== "number") {
+      throw new Error(`Expected state '${stateName}' check to return a number but got '${checkResult}'.`);
+    }
+
+    const dcResult = dcFunctions[stateName](...variableValues);
+    if (typeof(dcResult) !== "number") {
+      throw new Error(`Expected state '${currentStateName}' DC to return a number but got '${dcResult}'.`);
+    }
+
+    return getDegreeOfSuccess(d20, checkResult, dcResult);
+}
+
+export async function simulate(input) {
+
+  let remaining = getTotal(input);
+  const loadingBar = getLoadingBar(remaining);
 
   // Helpers
   const [helperNames, helperImpls] = getHelpers();
 
   // Strategies
+  const results = [];
   for (const strategyName in input.strategies) {
 
-    // Transitions
     const strategy = input.strategies[strategyName];
     const transitions = getTransitions(strategy);
+    const variantVariableNames = getVariantVariableNames(strategy);
+    const checkFunctions = getCheckFunctions(strategy, variantVariableNames);
+    const dcFunctions = getDcFunctions(strategy, variantVariableNames);
 
     // Variants
-    for (const variant of strategy.variants) {
+    for (const variantName in strategy.variants) {
 
-      // Get variant variable names
-      const [variableNames, variableFunctions] = getVariableFunctions(variant, helperNames);
-
-      // Check and DC function for each state
-      const checkFunctions = {};
-      const dcFunctions = {};
-      for (const stateName in strategy.states) {
-
-        const state = strategy.states[stateName];
-
-        // Check function
-        const checkCode = `return ${state.check}`;
-        console.log("checkCode", checkCode);
-        checkFunctions[stateName] = new Function(...variableNames, "d20", checkCode);
-
-        // DC function
-        const dcCode = `return ${state.dc}`;
-        console.log("dcCode", dcCode);
-        dcFunctions[stateName] = new Function(...variableNames, dcCode);
-      }
+      const variant = strategy.variants[variantName];
+      const variantVariableFunctions = getVariantVariableFunctions(variant, variantVariableNames, helperNames);
 
       // Levels
       for (let level = 1; level <= 20; level++) {
 
-        // Get variant variable values for level
-        const variableValues = getVariableValues(variableNames, variableFunctions, helperImpls, level);
+        console.log("level", level);
+        const variableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
 
-        // Iterations
-        for (let i = 0; i < input.iterations; i++) {
-          runIteration(strategy, transitions, checkFunctions, dcFunctions, variableValues);
+        // States
+        for (const stateName in strategy.states) {
 
-          currentIteration++;
-          percent = Math.floor(100 * currentIteration / totalIterations);
-          if (percent > prevPercent) {
-            console.log(percent, currentIteration, totalIterations);
-            prevPercent = percent;
-            loaded.style.width = percent + "%";
-            await sleep(0);
+          // Rolls
+          for (let d20 = 1; d20 <= 20; d20++) {
+            const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20);
+
+            /*result[strategyName] = result[strategyName] || {};
+            result[strategyName][variantName] = result[strategyName][variantName] || {};
+            result[strategyName][variantName][]*/
+
+            results.push({
+              strategyName: strategyName,
+              variantName: variantName,
+              stateName: stateName,
+              level: level,
+              d20: d20,
+              degreeOfSuccess: degreeOfSuccess
+            });
+
+            await loadingBar(--remaining);
           }
         }
       }
     }
   }
 
-  loading.classList.add("d-none");
-  console.log("Simulation complete");
+  console.log("results", results);
 }

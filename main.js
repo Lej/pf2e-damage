@@ -4,8 +4,10 @@ import { simulate } from "./simulate.js";
 
 async function click() {
   try {
-    await updateDiagram();
-    await simulate();
+    const input = JSON.parse(document.getElementById("input").value);
+    console.log("input", input);
+    await updateDiagram(input);
+    await simulate(input);
     Toastify({
       text: "Done",
       duration: 3000,
@@ -25,6 +27,7 @@ async function click() {
         "background": "#c9262d"
       }
     }).showToast();
+    console.error(e);
   }
 }
 

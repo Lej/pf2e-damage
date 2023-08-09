@@ -1,4 +1,5 @@
-import { defaultInput, examples } from "./constants.js";
+import { defaultInput } from "./constants.js";
+import { examples } from "./helpers.js";
 import { updateDiagram } from "./diagram.js";
 import { simulate } from "./simulate.js";
 

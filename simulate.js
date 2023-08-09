@@ -1,4 +1,4 @@
-import { helpers } from "./constants.js";
+import { helpers } from "./helpers.js";
 import { getTotal, getLoadingBar} from "./loading-bar.js";
 
 /*
@@ -47,6 +47,7 @@ function getVariantVariableValues(variableNames, variableFunctions, helperImpls,
   return variableValues;
 }
 
+/*
 function getTransitions(strategy) {
   const transitions = {};
   for (const stateName in strategy.states) {
@@ -69,14 +70,15 @@ function getTransitions(strategy) {
   }
   return transitions;
 }
+*/
 
 function getCheckFunctions(strategy, variableNames) {
   const functions = {};
   for (const stateName in strategy.states) {
     const state = strategy.states[stateName];
-    const code = `return ${state.check}`;
+    const code = `return ${state.check};`;
     console.log("code", code);
-    functions[stateName] = new Function(...variableNames, "d20", code);
+    functions[stateName] = new Function(...variableNames, code);
   }
   return functions;
 }
@@ -85,22 +87,64 @@ function getDcFunctions(strategy, variableNames) {
   const functions = {};
   for (const stateName in strategy.states) {
     const state = strategy.states[stateName];
-    const code = `return ${state.dc}`;
+    const code = `return ${state.dc};`;
     console.log("code", code);
     functions[stateName] = new Function(...variableNames, code);
   }
   return functions;
 }
 
+
+function getDamageFunctions(strategy, variableNames) {
+  const functions = {};
+  for (const stateName in strategy.states) {
+
+    const state = strategy.states[stateName];
+    const fns = {};
+    const damage = (code) => new Function(...variableNames, `return ${code};`);
+
+    const criticalSuccess = state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"];
+    if (!!criticalSuccess && !!criticalSuccess.damage) {
+      fns["critical-success"] = damage(criticalSuccess.damage);
+    } else {
+      fns["critical-success"] = damage(0);
+    }
+
+    const success = state.transitions["success"] || state.transitions["else"];
+    if (!!success && !!success.damage) {
+      fns["success"] = damage(success.damage);
+    } else {
+      fns["success"] = damage(0);
+    }
+
+    const failure = state.transitions["failure"] || state.transitions["else"];
+    if (!!failure && !!failure.damage) {
+      fns["failure"] = damage(failure.damage);
+    } else {
+      fns["failure"] = damage(0);
+    }
+
+    const criticalFailure = state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"];
+    if (!!criticalFailure && !!criticalFailure.damage) {
+      fns["critical-failure"] = damage(criticalFailure.damage);
+    } else {
+      fns["critical-failure"] = damage(0);
+    }
+
+    functions[stateName] = fns;
+  }
+  return functions;
+}
+
 function getVariantVariableNames(strategy) {
-  const variableNames = [];
+  const variantVariableNames = [];
   for (const variantName in strategy.variants) {
     const variant = strategy.variants[variantName];
     for (let variableName in variant) {
-      variableNames.push(variableName);
+      variantVariableNames.push(variableName);
     }
-    console.log("variableNames", variableNames);
-    return variableNames;
+    console.log("variantVariableNames", variantVariableNames);
+    return variantVariableNames;
   }
 }
 
@@ -133,14 +177,14 @@ function getDegreeOfSuccess(roll, value, dc) {
 
 function getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20) {
 
-    const checkResult = checkFunctions[stateName](...variableValues, d20);
+    const checkResult = checkFunctions[stateName](...variableValues);
     if (typeof(checkResult) !== "number") {
       throw new Error(`Expected state '${stateName}' check to return a number but got '${checkResult}'.`);
     }
 
     const dcResult = dcFunctions[stateName](...variableValues);
     if (typeof(dcResult) !== "number") {
-      throw new Error(`Expected state '${currentStateName}' DC to return a number but got '${dcResult}'.`);
+      throw new Error(`Expected state '${stateName}' DC to return a number but got '${dcResult}'.`);
     }
 
     return getDegreeOfSuccess(d20, checkResult, dcResult);
@@ -159,10 +203,13 @@ export async function simulate(input) {
   for (const strategyName in input.strategies) {
 
     const strategy = input.strategies[strategyName];
-    const transitions = getTransitions(strategy);
+    //const transitions = getTransitions(strategy);
     const variantVariableNames = getVariantVariableNames(strategy);
-    const checkFunctions = getCheckFunctions(strategy, variantVariableNames);
-    const dcFunctions = getDcFunctions(strategy, variantVariableNames);
+    const variableNames = [...helperNames, ...variantVariableNames, "level", "d20"];
+    console.log("variableNames", variableNames);
+    const checkFunctions = getCheckFunctions(strategy, variableNames);
+    const dcFunctions = getDcFunctions(strategy, variableNames);
+    const damageFunctions = getDamageFunctions(strategy, variableNames);
 
     // Variants
     for (const variantName in strategy.variants) {
@@ -174,14 +221,19 @@ export async function simulate(input) {
       for (let level = 1; level <= 20; level++) {
 
         console.log("level", level);
-        const variableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
+        const variantVariableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
 
         // States
         for (const stateName in strategy.states) {
 
           // Rolls
           for (let d20 = 1; d20 <= 20; d20++) {
+            const variableValues = [...helperImpls, ...variantVariableValues, level, d20];
             const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20);
+
+            const minDamage = "";
+            const maxDamage = "";
+            const avgDamage = "";
 
             /*result[strategyName] = result[strategyName] || {};
             result[strategyName][variantName] = result[strategyName][variantName] || {};

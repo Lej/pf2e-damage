@@ -5,7 +5,7 @@ function normalize(...args) {
 }
 
 function normalizeDisplayName(...args) {
-  return args.map(x => x.replace(/{/g, "[").replace(/}/g, "]").replace(/:+/g, "=").replace(/["]/g, "").replace(/,\b(?! )/g, ", ")).join("<br/>");
+  return args.filter(x => !!x).map(x => x.replace(/{/g, "[").replace(/}/g, "]").replace(/:+/g, "=").replace(/["]/g, "").replace(/,\b(?! )/g, ", ")).join("<br/>");
 }
 
 export async function updateDiagram(input) {
@@ -23,8 +23,8 @@ export async function updateDiagram(input) {
 
       const variant = strategy.variants[variantName];
       const variantJson = JSON.stringify(variant);
-      const normalizedVariantDisplayName = normalizeDisplayName(`${strategyName} ${variantJson}`);
-      const normalizedVariantName = normalize(strategyName, variantJson);
+      const normalizedVariantDisplayName = normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);
+      const normalizedVariantName = normalize(strategyName, variantName);
       console.log("normalizedVariantName", normalizedVariantName);
 
       if (stateNames.has(normalizedVariantName)) {
@@ -40,7 +40,7 @@ export async function updateDiagram(input) {
       for (const stateName in strategy.states) {
         const state = strategy.states[stateName];
         const normalizedStateDisplayName = normalizeDisplayName(stateName, `${state.check} vs ${state.dc}`);
-        const normalizedStateName = normalize(strategyName, variantJson, stateName);
+        const normalizedStateName = normalize(strategyName, variantName, stateName);
 
         if (stateNames.has(normalizedStateName)) {
           throw new Error(`Duplicate state name: ${normalizedStateName}`);
@@ -62,7 +62,14 @@ export async function updateDiagram(input) {
         if (!!state.transitions) {
           for (const transitionName in state.transitions) {
             const transition = state.transitions[transitionName];
-            diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantJson, transition.destination)}: ${transitionName}\n\n`;
+            const normalizedTransitionDisplayName = normalizeDisplayName(transitionName, transition.damage);
+
+            if (!!transition.destination) {
+              diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantName, transition.destination)}: ${normalizedTransitionDisplayName}\n\n`;
+            } else {
+              diagram += `        ${normalizedStateName} --> [*]: ${normalizedTransitionDisplayName}\n\n`;
+            }
+
             noTransition = false;
           }
         }

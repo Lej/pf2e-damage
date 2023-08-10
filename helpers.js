@@ -1,37 +1,5 @@
-
-export const examples = [
-  {
-    name: "_mod(level, 0)",
-    func: level => helpers["_mod"](level, 0),
-  },
-  {
-    name: "_mod(level, -1)",
-    func: level => helpers["_mod"](level, -1),
-  },
-  {
-    name: "_mod(level, -2)",
-    func: level => helpers["_mod"](level, -2),
-  },
-  {
-    name: "_prof(level, 'fighter')",
-    func: level => helpers["_prof"](level, "fighter"),
-  },
-  {
-    name: "_prof(level, 'rogue')",
-    func: level => helpers["_prof"](level, "rogue"),
-  },
-  {
-    name: "_ac(level, 'moderate')",
-    func: level => helpers["_ac"](level, "moderate"),
-  },
-  {
-    name: "_ac(level + 2, 'extreme')",
-    func: level => helpers["_ac"](level, "extreme"),
-  },
-];
-
 export const helpers = {
-  "_mod": (level, offset) => {
+  "_mod": (level, offset = 0) => {
     const boosts = 4 + Math.floor(level / 5) + offset;
     const doubleBoosts = Math.min(boosts, 4);
     const singleBoosts = Math.max(boosts - 4, 0);
@@ -57,7 +25,7 @@ export const helpers = {
     }
     throw new Error(`AC not implemented: ${type}`);
   },
-  "_weaponDice": (level, sides) => {
+  "_weaponDamageDice": (level) => {
     if (level < 4) {
       return 1;
     } else if (level < 12) {
@@ -67,7 +35,7 @@ export const helpers = {
     }
     return 4;
   },
-  "_dAverage": (sides) => (sides + 1) / 2,
-  "_dMin": (sides) => 1,
-  "_dMax": (sides) => sides
+  "_dieValueAvg": (sides) => (sides + 1) / 2,
+  "_dieValueMin": (sides) => 1,
+  "_dieValueMax": (sides) => sides
 }

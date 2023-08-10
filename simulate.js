@@ -94,44 +94,35 @@ function getDcFunctions(strategy, variableNames) {
   return functions;
 }
 
-
-function getDamageFunctions(strategy, variableNames) {
-  const functions = {};
+function getTransitions(strategy) {
+  const transitions = {};
   for (const stateName in strategy.states) {
-
     const state = strategy.states[stateName];
-    const fns = {};
-    const damage = (code) => new Function(...variableNames, `return ${code};`);
+    transitions[stateName] = {
+      "critical-success": state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"],
+      "success": state.transitions["success"] || state.transitions["else"],
+      "failure": state.transitions["failure"] || state.transitions["else"],
+      "critical-failure": state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"]
+    };
+  }
+  console.log("transitions", transitions);
+  return transitions;
+}
 
-    const criticalSuccess = state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"];
-    if (!!criticalSuccess && !!criticalSuccess.damage) {
-      fns["critical-success"] = damage(criticalSuccess.damage);
-    } else {
-      fns["critical-success"] = damage(0);
+function getDamageFunctions(transitions, parameterNames) {
+  const functions = {};
+  for (const stateName in transitions) {
+
+    function getDamageFunction(code) {
+      return new Function(...parameterNames, `return ${code};`);
     }
 
-    const success = state.transitions["success"] || state.transitions["else"];
-    if (!!success && !!success.damage) {
-      fns["success"] = damage(success.damage);
-    } else {
-      fns["success"] = damage(0);
-    }
-
-    const failure = state.transitions["failure"] || state.transitions["else"];
-    if (!!failure && !!failure.damage) {
-      fns["failure"] = damage(failure.damage);
-    } else {
-      fns["failure"] = damage(0);
-    }
-
-    const criticalFailure = state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"];
-    if (!!criticalFailure && !!criticalFailure.damage) {
-      fns["critical-failure"] = damage(criticalFailure.damage);
-    } else {
-      fns["critical-failure"] = damage(0);
-    }
-
-    functions[stateName] = fns;
+    functions[stateName] = {
+      "critical-success": getDamageFunction(transitions[stateName]["critical-success"]?.damage || 0),
+      "success": getDamageFunction(transitions[stateName]["success"]?.damage || 0),
+      "failure": getDamageFunction(transitions[stateName]["failure"]?.damage || 0),
+      "critical-failure": getDamageFunction(transitions[stateName]["critical-failure"]?.damage || 0),
+    };;
   }
   return functions;
 }
@@ -199,20 +190,27 @@ export async function simulate(input) {
   const [helperNames, helperImpls] = getHelpers();
 
   // Strategies
-  const results = [];
+  const damage = {};
   for (const strategyName in input.strategies) {
+
+    damage[strategyName] = {};
 
     const strategy = input.strategies[strategyName];
     //const transitions = getTransitions(strategy);
     const variantVariableNames = getVariantVariableNames(strategy);
-    const variableNames = [...helperNames, ...variantVariableNames, "level", "d20"];
-    console.log("variableNames", variableNames);
-    const checkFunctions = getCheckFunctions(strategy, variableNames);
-    const dcFunctions = getDcFunctions(strategy, variableNames);
-    const damageFunctions = getDamageFunctions(strategy, variableNames);
+
+    const degreeOfSuccessParameterNames = [...helperNames, ...variantVariableNames, "level", "d20"];
+    const checkFunctions = getCheckFunctions(strategy, degreeOfSuccessParameterNames);
+    const dcFunctions = getDcFunctions(strategy, degreeOfSuccessParameterNames);
+
+    const transitions = getTransitions(strategy);
+    const damageParameterNames = [...helperNames, ...variantVariableNames, "level", "_dieValue"];
+    const damageFunctions = getDamageFunctions(transitions, damageParameterNames);
 
     // Variants
     for (const variantName in strategy.variants) {
+
+      damage[strategyName][variantName] = {};
 
       const variant = strategy.variants[variantName];
       const variantVariableFunctions = getVariantVariableFunctions(variant, variantVariableNames, helperNames);
@@ -220,33 +218,76 @@ export async function simulate(input) {
       // Levels
       for (let level = 1; level <= 20; level++) {
 
+        damage[strategyName][variantName][level] = {};
+
         console.log("level", level);
         const variantVariableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
 
         // States
         for (const stateName in strategy.states) {
 
+          const damageParameterValues = [...helperImpls, ...variantVariableValues, level];
+          const damageParameterValuesMin = [...damageParameterValues, (sides) => 1];
+          const damageParameterValuesAvg = [...damageParameterValues, (sides) => (sides + 1) / 2];
+          const damageParameterValuesMax = [...damageParameterValues, (sides) => sides];
+
+          function getDamage(degreeOfSuccess) {
+            return {
+              min: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMin),
+              avg: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesAvg),
+              max: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMax),
+            }
+          }
+
+          damage[strategyName][variantName][level][stateName] = {
+            "critical-success": {
+              destination: transitions[stateName]["critical-success"]?.destination,
+              damage: getDamage("critical-success"),
+              rolls: []
+            },
+            "success": {
+              destination: transitions[stateName]["success"]?.destination,
+              damage: getDamage("success"),
+              rolls: []
+            },
+            "failure": {
+              destination: transitions[stateName]["failure"]?.destination,
+              damage: getDamage("failure"),
+              rolls: []
+            },
+            "critical-failure": {
+              destination: transitions[stateName]["critical-failure"]?.destination,
+              damage: getDamage("critical-failure"),
+              rolls: []
+            }
+          };
+
+          console.log("damage[strategyName][variantName][level][stateName]", damage[strategyName][variantName][level][stateName]);
+
           // Rolls
           for (let d20 = 1; d20 <= 20; d20++) {
-            const variableValues = [...helperImpls, ...variantVariableValues, level, d20];
-            const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20);
+            const degreeOfSuccessParameterValues = [...helperImpls, ...variantVariableValues, level, d20];
+            const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, degreeOfSuccessParameterValues, d20);
 
-            const minDamage = "";
-            const maxDamage = "";
-            const avgDamage = "";
+            damage[strategyName][variantName][level][stateName][degreeOfSuccess].rolls.push(d20);
 
             /*result[strategyName] = result[strategyName] || {};
             result[strategyName][variantName] = result[strategyName][variantName] || {};
             result[strategyName][variantName][]*/
 
+            /*
             results.push({
               strategyName: strategyName,
               variantName: variantName,
               stateName: stateName,
               level: level,
               d20: d20,
-              degreeOfSuccess: degreeOfSuccess
+              degreeOfSuccess: degreeOfSuccess,
+              minDamage: minDamage,
+              avgDamage: avgDamage,
+              maxDamage: maxDamage
             });
+            */
 
             await loadingBar(--remaining);
           }
@@ -255,5 +296,5 @@ export async function simulate(input) {
     }
   }
 
-  console.log("results", results);
+  console.log("damage", damage);
 }

@@ -3,18 +3,18 @@ export const defaultInput = {
     "Strikes": {
       variants: {
         "Normal": {
-          str: "_mod(level, 0)",
+          str: "_mod(level)",
           prof: "_prof(level, 'fighter')",
           ac: "_ac(level, 'moderate')",
           map: -5,
-          weaponDie: 10,
+          sides: 10,
         },
         "Agile": {
-          str: "_mod(level, 0)",
+          str: "_mod(level)",
           prof: "_prof(level, 'fighter')",
           ac: "_ac(level, 'moderate')",
           map: -4,
-          weaponDie: 10,
+          sides: 10,
         }
       },
       start: "Strike #1",
@@ -24,11 +24,11 @@ export const defaultInput = {
           dc: "ac",
           transitions: {
             "critical-success": {
-              damage: "2 * (_weaponDamage(level, weaponDie) + str)",
+              damage: "2 * (_weaponDamageDice(level) * _dieValue(sides) + str)",
               destination: "Strike #2"
             },
             "success": {
-              damage: "_weaponDamage(level, weaponDie) + str",
+              damage: "_weaponDamageDice(level) * _dieValue(sides) + str",
               destination: "Strike #2"
             },
             "else": {
@@ -41,11 +41,11 @@ export const defaultInput = {
           dc: "ac",
           transitions: {
             "critical-success": {
-              damage: "2 * (_weaponDamage(level, weaponDie) + str)",
+              damage: "2 * (_weaponDamageDice(level) * _dieValue(sides) + str)",
               destination: "Strike #3"
             },
             "success": {
-              damage: "_weaponDamage(level, weaponDie) + str",
+              damage: "_weaponDamageDice(level) * _dieValue(sides) + str",
               destination: "Strike #3"
             },
             "else": {
@@ -58,10 +58,10 @@ export const defaultInput = {
           dc: "ac",
           transitions: {
             "critical-success": {
-              damage: "2 * (_weaponDamage(level, weaponDie) + str)",
+              damage: "2 * (_weaponDamageDice(level) * _dieValue(sides) + str)",
             },
             "success": {
-              damage: "_weaponDamage(level, weaponDie) + str",
+              damage: "_weaponDamageDice(level) * _dieValue(sides) + str",
             }
           }
         }

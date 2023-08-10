@@ -32,3 +32,8 @@ export function getLoadingBar(total) {
     }
   };
 }
+
+export function hideLoadingBar() {
+  const loading = document.getElementById("loading");
+  loading.classList.add("d-none");
+}

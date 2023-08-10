@@ -22,6 +22,10 @@ export const examples = [
     func: level => helpers._prof(level, "rogue"),
   },
   {
+    name: "_potency(level)",
+    func: level => helpers._potency(level),
+  },
+  {
     name: "_ac(level, 'moderate')",
     func: level => helpers._ac(level, "moderate"),
   },
@@ -32,6 +36,10 @@ export const examples = [
   {
     name: "_weaponDamageDice(level)",
     func: level => helpers._weaponDamageDice(level),
+  },
+  {
+    name: "_cases(level, [[1,1],[10,2],[20,3]])",
+    func: level => helpers._cases(level, [[1,1],[10,2],[20,3]]),
   }
 ];
 

@@ -1,10 +1,20 @@
-export const defaultInput = {
+export const constants = {};
+
+constants.criticalSuccess = "critical-success";
+constants.success = "success";
+constants.failure = "failure";
+constants.criticalFailure = "critical-failure";
+
+constants.degreesOfSuccess = [constants.criticalSuccess, constants.success, constants.failure, constants.criticalFailure];
+
+constants.defaultInput = {
   strategies: {
     "Strikes": {
       variants: {
         "Normal": {
           str: "_mod(level)",
           prof: "_prof(level, 'fighter')",
+          potency: "_potency(level)",
           ac: "_ac(level, 'moderate')",
           map: -5,
           sides: 10,
@@ -12,6 +22,7 @@ export const defaultInput = {
         "Agile": {
           str: "_mod(level)",
           prof: "_prof(level, 'fighter')",
+          potency: "_potency(level)",
           ac: "_ac(level, 'moderate')",
           map: -4,
           sides: 10,
@@ -20,7 +31,8 @@ export const defaultInput = {
       start: "Strike #1",
       states: {
         "Strike #1": {
-          check: "d20 + str + prof",
+          start: true,
+          check: "d20 + str + prof + potency",
           dc: "ac",
           transitions: {
             "critical-success": {
@@ -37,7 +49,7 @@ export const defaultInput = {
           }
         },
         "Strike #2": {
-          check: "d20 + str + prof + map",
+          check: "d20 + str + prof + potency + map",
           dc: "ac",
           transitions: {
             "critical-success": {
@@ -54,7 +66,7 @@ export const defaultInput = {
           }
         },
         "Strike #3": {
-          check: "d20 + str + prof + 2 * map",
+          check: "d20 + str + prof + potency + 2 * map",
           dc: "ac",
           transitions: {
             "critical-success": {

@@ -1,3 +1,4 @@
+import { constants } from "./constants.js";
 import { helpers } from "./helpers.js";
 import { getTotal, getLoadingBar} from "./loading-bar.js";
 
@@ -112,17 +113,10 @@ function getTransitions(strategy) {
 function getDamageFunctions(transitions, parameterNames) {
   const functions = {};
   for (const stateName in transitions) {
-
-    function getDamageFunction(code) {
-      return new Function(...parameterNames, `return ${code};`);
+    functions[stateName] = {};
+    for (const degreeOfSuccess of constants.degreesOfSuccess) {
+      functions[stateName][degreeOfSuccess] = new Function(...parameterNames, `return ${transitions[stateName][degreeOfSuccess]?.damage || 0};`);
     }
-
-    functions[stateName] = {
-      "critical-success": getDamageFunction(transitions[stateName]["critical-success"]?.damage || 0),
-      "success": getDamageFunction(transitions[stateName]["success"]?.damage || 0),
-      "failure": getDamageFunction(transitions[stateName]["failure"]?.damage || 0),
-      "critical-failure": getDamageFunction(transitions[stateName]["critical-failure"]?.damage || 0),
-    };;
   }
   return functions;
 }
@@ -181,7 +175,7 @@ function getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variabl
     return getDegreeOfSuccess(d20, checkResult, dcResult);
 }
 
-export async function simulate(input) {
+async function getDamage(input) {
 
   let remaining = getTotal(input);
   const loadingBar = getLoadingBar(remaining);
@@ -190,10 +184,10 @@ export async function simulate(input) {
   const [helperNames, helperImpls] = getHelpers();
 
   // Strategies
-  const damage = {};
+  const results = {};
   for (const strategyName in input.strategies) {
 
-    damage[strategyName] = {};
+    results[strategyName] = {};
 
     const strategy = input.strategies[strategyName];
     //const transitions = getTransitions(strategy);
@@ -210,7 +204,7 @@ export async function simulate(input) {
     // Variants
     for (const variantName in strategy.variants) {
 
-      damage[strategyName][variantName] = {};
+      results[strategyName][variantName] = {};
 
       const variant = strategy.variants[variantName];
       const variantVariableFunctions = getVariantVariableFunctions(variant, variantVariableNames, helperNames);
@@ -218,7 +212,7 @@ export async function simulate(input) {
       // Levels
       for (let level = 1; level <= 20; level++) {
 
-        damage[strategyName][variantName][level] = {};
+        results[strategyName][variantName][level] = {};
 
         console.log("level", level);
         const variantVariableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
@@ -226,75 +220,178 @@ export async function simulate(input) {
         // States
         for (const stateName in strategy.states) {
 
+          const state = strategy.states[stateName];
+
           const damageParameterValues = [...helperImpls, ...variantVariableValues, level];
           const damageParameterValuesMin = [...damageParameterValues, (sides) => 1];
           const damageParameterValuesAvg = [...damageParameterValues, (sides) => (sides + 1) / 2];
           const damageParameterValuesMax = [...damageParameterValues, (sides) => sides];
 
-          function getDamage(degreeOfSuccess) {
-            return {
-              min: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMin),
-              avg: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesAvg),
-              max: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMax),
+          function getResult() {
+            const result = {
+              start: state.start || false,
+            };
+            for (const degreeOfSuccess of constants.degreesOfSuccess) {
+              result[degreeOfSuccess] = {
+                rolls: [],
+                destination: transitions[stateName][degreeOfSuccess]?.destination,
+                min: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMin),
+                avg: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesAvg),
+                max: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMax),
+              }
             }
+            return result;
           }
 
-          damage[strategyName][variantName][level][stateName] = {
-            "critical-success": {
-              destination: transitions[stateName]["critical-success"]?.destination,
-              damage: getDamage("critical-success"),
-              rolls: []
-            },
-            "success": {
-              destination: transitions[stateName]["success"]?.destination,
-              damage: getDamage("success"),
-              rolls: []
-            },
-            "failure": {
-              destination: transitions[stateName]["failure"]?.destination,
-              damage: getDamage("failure"),
-              rolls: []
-            },
-            "critical-failure": {
-              destination: transitions[stateName]["critical-failure"]?.destination,
-              damage: getDamage("critical-failure"),
-              rolls: []
-            }
-          };
-
-          console.log("damage[strategyName][variantName][level][stateName]", damage[strategyName][variantName][level][stateName]);
+          const result = getResult();
 
           // Rolls
           for (let d20 = 1; d20 <= 20; d20++) {
             const degreeOfSuccessParameterValues = [...helperImpls, ...variantVariableValues, level, d20];
             const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, degreeOfSuccessParameterValues, d20);
 
-            damage[strategyName][variantName][level][stateName][degreeOfSuccess].rolls.push(d20);
-
-            /*result[strategyName] = result[strategyName] || {};
-            result[strategyName][variantName] = result[strategyName][variantName] || {};
-            result[strategyName][variantName][]*/
-
-            /*
-            results.push({
-              strategyName: strategyName,
-              variantName: variantName,
-              stateName: stateName,
-              level: level,
-              d20: d20,
-              degreeOfSuccess: degreeOfSuccess,
-              minDamage: minDamage,
-              avgDamage: avgDamage,
-              maxDamage: maxDamage
-            });
-            */
+            result[degreeOfSuccess].rolls.push(d20);
 
             await loadingBar(--remaining);
           }
+
+          result.count = 20;
+          result.total = 0;
+          result.min = null;
+          result.max = null;
+          for (const degreeOfSuccess of constants.degreesOfSuccess) {
+            const dos = result[degreeOfSuccess];
+            dos.count = dos.rolls.length;
+            dos.chance = dos.count / result.count;
+            result.total += dos.avg * dos.count;
+            result.min = Math.min(result.min || Number.MAX_SAFE_INTEGER, dos.min);
+            result.max = Math.max(result.max || Number.MIN_SAFE_INTEGER, dos.max);
+          }
+          result.avg = result.total / result.count;
+
+          results[strategyName][variantName][level][stateName] = result;
         }
       }
     }
   }
 
-  console.log("damage", damage);
+  //console.log("results", results);
+  return results;
+}
+
+function getDamageSummary(states, stateName, chance) {
+
+  if (!stateName) {
+    return {
+      avg: 0,
+      min: 0,
+      max: 0,
+    };
+  }
+
+  const state = states[stateName];
+
+  const result = {
+    avg: chance * state.avg,
+    min: state.min,
+    max: state.max,
+  };
+
+  let childMin = 0;
+  let childMax = 0;
+  for (const degreeOfSuccess of constants.degreesOfSuccess) {
+    const dos = state[degreeOfSuccess];
+    const child = getDamageSummary(states, dos.destination, chance * dos.chance);
+    result.avg += child.avg;
+    childMin = Math.min(childMin, child.min);
+    childMax = Math.max(childMax, child.max);
+  }
+  result.min += childMin;
+  result.max += childMax;
+
+  return result;
+
+  /*
+  return  + getAvgDamage(states, state)
+
+  let total = 0;
+  let damage = 0;
+
+  const degreesOfSuccess = ["critical-success", "success", "failure", "critical-failure"];
+  for (const degreeOfSuccess of degreesOfSuccess) {
+    const state = current[degreeOfSuccess];
+    total += state.rolls.length;
+    damage += state.rolls.length * state.damage.avg;
+  }
+
+  const average = damage / total;
+  return average;
+  */
+
+  /*
+  const criticalSuccess = current["critical-success"];
+  const success = current["success"];
+  const failure = current["failure"];
+  const criticalFailure = current["critical-failure"];
+
+  const numCriticalSuccessRolls = criticalSuccess.rolls.length;
+  const numSuccessRolls = success.rolls.length;
+  const numFailureRolls = failure.rolls.length;
+  const numCriticalFailureRolls = criticalFailure.rolls.length;
+
+  const numRolls = numCriticalSuccessRolls + numSuccessRolls + numFailureRolls + numCriticalFailureRolls;
+
+  const chanceCriticalSuccess = numCriticalFailureRolls / numRolls;
+  const chanceSuccess = numSuccessRolls / numRolls;
+  const chanceFailure = numFailureRolls / numRolls;
+  const chanceCriticalFailure = numCriticalFailureRolls / numRolls;
+
+  const damageCriticalSuccess = chanceCriticalSuccess * (criticalSuccess.damage.avg + getAvgDamage(states, states[criticalSuccess?.destination]));
+  const damageSuccess = chanceCriticalSuccess * (success.damage.avg + getAvgDamage(states, states[success?.destination]));
+  const damageFailure = chanceCriticalSuccess * (failure.damage.avg + getAvgDamage(states, states[failure?.destination]));
+  const damageCriticalFailure = chanceCriticalSuccess * (criticalFailure.damage.avg + getAvgDamage(states, states[criticalFailure?.destination]));
+
+  const damageTotal = damageCriticalSuccess + damageSuccess + damageFailure + damageCriticalFailure;
+  return damageTotal;*/
+}
+
+function getStart(states) {
+  for (const stateName in states) {
+    const state = states[stateName];
+    if (!!state.start) {
+      return stateName;
+    }
+  }
+  throw new Error("Failed to find start state.");
+}
+
+function getChartData(damage) {
+  const results = [];
+  for (const strategyName in damage) {
+    const strategy = damage[strategyName];
+    for (const variantName in strategy) {
+      const variant = strategy[variantName];
+      const result = {
+        name: `${strategyName} (${variantName})`,
+        avg: [],
+        min: [],
+        max: [],
+      };
+      for (let level = 1; level <= 20; level++) {
+        const states = variant[level];
+        const start = getStart(states);
+        const summary = getDamageSummary(states, start, 1);
+        result.avg.push(summary.avg);
+        result.min.push(summary.min);
+        result.max.push(summary.max);
+      }
+      results.push(result);
+    }
+  }
+  return results;
+}
+
+export async function simulate(input) {
+  const damage = await getDamage(input);
+  return getChartData(damage);
 }

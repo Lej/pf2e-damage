@@ -62,7 +62,7 @@ export async function updateDiagram(input) {
         if (!!state.transitions) {
           for (const transitionName in state.transitions) {
             const transition = state.transitions[transitionName];
-            const normalizedTransitionDisplayName = normalizeDisplayName(transitionName, transition.damage);
+            const normalizedTransitionDisplayName = normalizeDisplayName(transitionName, `${transition.damage}`);
 
             if (!!transition.destination) {
               diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantName, transition.destination)}: ${normalizedTransitionDisplayName}\n\n`;

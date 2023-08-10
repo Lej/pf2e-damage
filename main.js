@@ -1,4 +1,4 @@
-import { defaultInput } from "./constants.js";
+import { constants } from "./constants.js";
 import { addDocumentation } from "./documentation.js";
 import { updateDiagram } from "./diagram.js";
 import { simulate } from "./simulate.js";
@@ -10,8 +10,8 @@ async function click() {
     const input = JSON.parse(document.getElementById("input").value);
     console.log("input", input);
     await updateDiagram(input);
-    await simulate(input);
-    await updateDamageChart();
+    const chartData = await simulate(input);
+    await updateDamageChart(chartData);
     Toastify({
       text: "Done",
       duration: 3000,
@@ -37,7 +37,7 @@ async function click() {
 }
 
 addDocumentation();
-document.getElementById("input").value = JSON.stringify(defaultInput, undefined, 4);
+document.getElementById("input").value = JSON.stringify(constants.defaultInput, undefined, 4);
 document.getElementById("simulate").addEventListener("click", click);
 
 click();

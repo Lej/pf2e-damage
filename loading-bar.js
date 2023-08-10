@@ -22,7 +22,7 @@ export function getLoadingBar(total) {
     const current = (total - remaining);
     const percent = Math.floor(100 * current / total);
     if (percent > prevPercent) {
-      console.log(percent, current, total);
+      //console.log(percent, current, total);
       prevPercent = percent;
       loaded.style.width = percent + "%";
       await sleep(0);

@@ -23,6 +23,15 @@ function weaponSpecialization(level, type, weaponSpecializationLevel, greaterWea
     : step + 1;
 }
 
+function cases(level, cases) {
+  for (let i = cases.length - 1; i >= 0; i--) {
+    if (cases[i][0] <= level) {
+      return cases[i][1];
+    }
+  }
+  throw new Error("Failed to find valid case.");
+}
+
 export const helpers = {
   _mod: (level, offset = 0) => {
     const boosts = 4 + Math.floor(level / 5) + offset;
@@ -41,14 +50,7 @@ export const helpers = {
     }
     return 3;
   },
-  _cases: (level, cases) => {
-    for (let i = cases.length - 1; i >= 0; i--) {
-      if (cases[i][0] <= level) {
-        return cases[i][1];
-      }
-    }
-    throw new Error("Failed to find valid case.");
-  },
+  _cases: cases,
   _ac: (level, type) => {
     if (type == "extreme") {
       return [18, 19, 19, 21, 22, 24, 25, 27, 28, 30, 31, 33, 34, 36, 37, 39, 40, 42, 43, 45, 46, 48, 49, 51, 52, 54][level + 1];
@@ -77,6 +79,7 @@ export const helpers = {
     }
     throw new Error(`(Greater) weapon specialization not implemented: ${type}`);
   },
+  _powerAttack: (level) => cases(level, [[1,1],[10,2],[18,3]]),
   _dieValueAvg: (sides) => (sides + 1) / 2,
   _dieValueMin: (sides) => 1,
   _dieValueMax: (sides) => sides

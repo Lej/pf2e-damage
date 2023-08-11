@@ -37,12 +37,18 @@ export function updateDamageChart(datas) {
     ]
   });
 
+  const graph = document.getElementById("graph");
+  if (!!graph) {
+    graph.remove();
+  }
+
   const col = document.createElement("div");
   col.setAttribute("class", "col");
   col.appendChild(ctx);
 
   const row = document.createElement("div");
   row.setAttribute("class", "row");
+  row.setAttribute("id", "graph");
   row.appendChild(col);
 
   const container = document.getElementById("output");

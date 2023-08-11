@@ -5,7 +5,19 @@ function normalize(...args) {
 }
 
 function normalizeDisplayName(...args) {
-  return args.filter(x => !!x).map(x => x.replace(/{/g, "[").replace(/}/g, "]").replace(/:+/g, "=").replace(/["]/g, "").replace(/,\b(?! )/g, ", ")).join("<br/>");
+  return args
+    .filter(x => !!x)
+    .map(x => x
+      //.replace(/{/g, "[")
+      //.replace(/}/g, "]")
+      .replace(/{/g, "")
+      .replace(/}/g, "")
+      .replace(/:+/g, " =")
+      .replace(/,\b(?! )/g, ", ")
+      .replace(/["\r]/g, "")
+      .trim()
+      .replace(/["\n]/g, "<br/>")
+    ).join("<br/>");
 }
 
 export async function updateDiagram(input) {
@@ -27,10 +39,14 @@ export async function updateDiagram(input) {
     for (const variantName in strategy.variants) {
 
       const variant = strategy.variants[variantName];
-      const variantJson = JSON.stringify(variant);
-      const normalizedVariantDisplayName = variantCount === 1
+      //const variantJson = JSON.stringify(variant);
+      const variantJson = JSON.stringify(variant, null, 2);
+      /*const normalizedVariantDisplayName = variantCount === 1
         ? normalizeDisplayName(`${strategyName} ${variantJson}`)
-        : normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);
+        : normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);*/
+      const normalizedVariantDisplayName = variantCount === 1
+        ? normalizeDisplayName(`${strategyName}`)
+        : normalizeDisplayName(`${strategyName} (${variantName})`);
       const normalizedVariantName = normalize(strategyName, variantName);
       console.log("normalizedVariantName", normalizedVariantName);
 
@@ -40,6 +56,11 @@ export async function updateDiagram(input) {
       stateNames.add(normalizedVariantName);
 
       diagram += `    ${normalizedVariantName}: ${normalizedVariantDisplayName}\n`;
+
+      diagram += `        note right of ${normalizedVariantName}\n`;
+      diagram += `            ${normalizeDisplayName(variantJson)}\n`;
+      diagram += `        end note\n\n`;
+
       diagram += `    [*] --> ${normalizedVariantName}\n\n`;
       diagram += `    state ${normalizedVariantName} {\n\n`;
       diagram += `        direction LR\n\n`;
@@ -71,8 +92,9 @@ export async function updateDiagram(input) {
             const transition = state.transitions[transitionName];
             const normalizedTransitionDisplayName = normalizeDisplayName(transitionName, `${transition.damage}`);
 
-            if (!!transition.destination) {
-              diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantName, transition.destination)}: ${normalizedTransitionDisplayName}\n\n`;
+            const destination = transition.destination || state.destination;
+            if (!!destination) {
+              diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantName, destination)}: ${normalizedTransitionDisplayName}\n\n`;
             } else {
               diagram += `        ${normalizedStateName} --> [*]: ${normalizedTransitionDisplayName}\n\n`;
             }
@@ -80,6 +102,12 @@ export async function updateDiagram(input) {
             noTransition = false;
           }
         }
+
+        if (!!state.destination && (!state.transitions || !state.transitions["else"])) {
+          diagram += `        ${normalizedStateName} --> ${normalize(strategyName, variantName, state.destination)}: else\n\n`;
+          noTransition = false;
+        }
+
         if (noTransition) {
           diagram += `        ${normalizedStateName} --> [*]`;
         }

@@ -44,7 +44,11 @@ export const examples = [
   {
     name: "_cases(level, [[1,1],[10,2],[20,3]])",
     func: level => helpers._cases(level, [[1,1],[10,2],[20,3]]),
-  }
+  },
+  {
+    name: "_powerAttack(level)",
+    func: level => helpers._powerAttack(level),
+  },
 ];
 
 function addMarkdownTable(markdown) {

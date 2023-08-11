@@ -18,7 +18,7 @@ constants.defaultInput = {
           strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _dieValue(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
           powerAttackDmg: "(_weaponDamageDice(level) + _powerAttack(level)) * _dieValue(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
           powerAttackCritDmg: "2 * ((_weaponDamageDice(level) + _powerAttack(level) + 1) * _dieValue(12) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level + 2, 'moderate')",
+          ac: "_ac(level, 'moderate')",
           map: -5
         }
       },
@@ -59,7 +59,7 @@ constants.defaultInput = {
           strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _dieValue(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
           powerAttackDmg: "(_weaponDamageDice(level) + _powerAttack(level)) * _dieValue(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
           powerAttackCritDmg: "2 * ((_weaponDamageDice(level) + _powerAttack(level) + 1) * _dieValue(12) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level + 2, 'moderate')",
+          ac: "_ac(level, 'moderate')",
           map: -5
         }
       },
@@ -98,7 +98,7 @@ constants.defaultInput = {
           attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
           strikeDmg: "_weaponDamageDice(level) * _dieValue(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
           strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _dieValue(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level + 2, 'moderate')",
+          ac: "_ac(level, 'moderate')",
           map: -5
         }
       },
@@ -150,7 +150,7 @@ constants.defaultInput = {
           attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
           strikeDmg: "_weaponDamageDice(level) * _dieValue(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
           strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _dieValue(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level + 2, 'moderate')",
+          ac: "_ac(level, 'moderate')",
           map: -5
         }
       },

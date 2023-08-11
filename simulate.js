@@ -44,7 +44,7 @@ function getVariantVariableValues(variableNames, variableFunctions, helperImpls,
     const value = fn(...helperImpls, level);
     variableValues.push(value);
   }
-  console.log("variableValues", variableValues);
+  //console.log("variableValues", variableValues);
   return variableValues;
 }
 
@@ -214,7 +214,7 @@ async function getDamage(input) {
 
         results[strategyName][variantName][level] = {};
 
-        console.log("level", level);
+        //console.log("level", level);
         const variantVariableValues = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level);
 
         // States
@@ -275,7 +275,7 @@ async function getDamage(input) {
     }
   }
 
-  //console.log("results", results);
+  console.log("results", results);
   return results;
 }
 
@@ -369,10 +369,18 @@ function getChartData(damage) {
   const results = [];
   for (const strategyName in damage) {
     const strategy = damage[strategyName];
+
+    let variantCount = 0;
+    for (const variantName in strategy) {
+      variantCount++;
+    }
+
     for (const variantName in strategy) {
       const variant = strategy[variantName];
       const result = {
-        name: `${strategyName} (${variantName})`,
+        name: variantCount === 1
+          ? `${strategyName}`
+          : `${strategyName} (${variantName})`,
         avg: [],
         min: [],
         max: [],

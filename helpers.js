@@ -1,3 +1,28 @@
+function prof(level, type) {
+  if (type === "fighter") {
+    return [4, 4, 4, 4, 6, 6, 6, 6, 6, 6,  6,  6,  8,  8,  8,  8,  8,  8,  8,  8][level - 1];
+  } else if (type === "rogue") {
+    return [2, 2, 2, 2, 4, 4, 4, 4, 4, 4,  4,  4,  6,  6,  6,  6,  6,  6,  6,  6][level - 1];
+  }
+  throw new Error(`Proficiency not implemented: ${type}`);
+}
+
+function weaponSpecialization(level, type, weaponSpecializationLevel, greaterWeaponSpecializationLevel) {
+
+  if (level < weaponSpecializationLevel) {
+    return 0;
+  }
+
+  const step = ((prof(level, type) / 2) - 1);
+  if (step < 1) {
+    return 0;
+  }
+
+  return level >= greaterWeaponSpecializationLevel
+    ? 2 * (step + 1)
+    : step + 1;
+}
+
 export const helpers = {
   _mod: (level, offset = 0) => {
     const boosts = 4 + Math.floor(level / 5) + offset;
@@ -5,14 +30,7 @@ export const helpers = {
     const singleBoosts = Math.max(boosts - 4, 0);
     return doubleBoosts + Math.floor(singleBoosts / 2);
   },
-  _prof: (level, type) => {
-    if (type === "fighter") {
-      return level + [4, 4, 4, 4, 6, 6, 6, 6, 6, 6,  6,  6,  8,  8,  8,  8,  8,  8,  8,  8][level - 1];
-    } else if (type === "rogue") {
-      return level + [2, 2, 2, 2, 4, 4, 4, 4, 4, 4,  4,  4,  6,  6,  6,  6,  6,  6,  6,  6][level - 1];
-    }
-    throw new Error(`Proficiency not implemented: ${type}`);
-  },
+  _prof: prof,
   _potency: (level) => {
     if (level < 2) {
       return 0;
@@ -52,6 +70,12 @@ export const helpers = {
       return 3;
     }
     return 4;
+  },
+  _weaponSpecialization: (level, type) => {
+    if (type === "fighter") {
+      return weaponSpecialization(level, type, 7, 15);
+    }
+    throw new Error(`(Greater) weapon specialization not implemented: ${type}`);
   },
   _dieValueAvg: (sides) => (sides + 1) / 2,
   _dieValueMin: (sides) => 1,

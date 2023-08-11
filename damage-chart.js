@@ -3,6 +3,7 @@ const autocolors = window['chartjs-plugin-autocolors'];
 export function updateDamageChart(datas) {
   const ctx = document.createElement("canvas");
 
+  const tooltips = [];
   const datasets = [];
   for (const data of datas) {
     const dataset = {
@@ -11,6 +12,7 @@ export function updateDamageChart(datas) {
       fill: false,
     };
     datasets.push(dataset);
+    tooltips.push(data.avg.map((x, i) => `${data.name}: Avg=${data.avg[i]}, Min=${data.min[i]}, Max=${data.max[i]}`));
   }
 
   console.log("datasets", datasets);
@@ -20,6 +22,15 @@ export function updateDamageChart(datas) {
     data: {
       labels: [...Array(20).keys()].map(x => `Level ${x + 1}`),
       datasets: datasets
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: x => tooltips[x.datasetIndex][x.dataIndex]
+          }
+        }
+      }
     },
     plugins: [
       autocolors

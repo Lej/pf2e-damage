@@ -14,12 +14,16 @@ export const examples = [
     func: level => helpers._mod(level, -2),
   },
   {
+    name: "_prof(level, 'rogue')",
+    func: level => helpers._prof(level, "rogue"),
+  },
+  {
     name: "_prof(level, 'fighter')",
     func: level => helpers._prof(level, "fighter"),
   },
   {
-    name: "_prof(level, 'rogue')",
-    func: level => helpers._prof(level, "rogue"),
+    name: "_weaponSpecialization(level, 'fighter')",
+    func: level => helpers._weaponSpecialization(level, "fighter"),
   },
   {
     name: "_potency(level)",

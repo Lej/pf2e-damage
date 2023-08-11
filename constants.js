@@ -9,6 +9,58 @@ constants.degreesOfSuccess = [constants.criticalSuccess, constants.success, cons
 
 constants.defaultInput = {
   strategies: {
+    "Attack, Power Attack": {
+      variants: {
+        "Normal": {
+          attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
+          ac: "_ac(level, 'moderate')",
+          sides: 10,
+          pickCrit: "2 * _weaponDamageDice(level)",
+          powerAttack: "_cases(level, [[1,1],[10,2],[18,3]])",
+          fatal: 1,
+          fatalSides: 12,
+          static: "_mod(level) + _weaponSpecialization(level, 'fighter')",
+        }
+      },
+      states: {
+        "Strike": {
+          start: true,
+          check: "d20 + attack",
+          dc: "ac",
+          transitions: {
+            "critical-success": {
+              damage: "2 * ((_weaponDamageDice(level) + fatal) * _dieValue(fatalSides) + static + pickCrit)",
+              destination: "Power Attack"
+            },
+            "success": {
+              damage: "_weaponDamageDice(level) * _dieValue(sides) + static",
+              destination: "Power Attack"
+            },
+            "else": {
+              destination: "Power Attack"
+            }
+          }
+        },
+        "Power Attack": {
+          check: "d20 + attack - 5",
+          dc: "ac",
+          transitions: {
+            "critical-success": {
+              damage: "2 * ((_weaponDamageDice(level) + fatal + powerAttack) * _dieValue(fatalSides) + static + pickCrit)",
+            },
+            "success": {
+              damage: "(_weaponDamageDice(level) + powerAttack) * _dieValue(sides) + static",
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/*
+constants.defaultInput = {
+  strategies: {
     "Strikes": {
       variants: {
         "Normal": {
@@ -81,3 +133,4 @@ constants.defaultInput = {
     }
   }
 }
+*/

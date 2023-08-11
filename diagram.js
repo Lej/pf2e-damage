@@ -19,11 +19,18 @@ export async function updateDiagram(input) {
   for (const strategyName in input.strategies) {
     const strategy = input.strategies[strategyName];
 
+    let variantCount = 0;
+    for (const variantName in strategy.variants) {
+      variantCount++;
+    }
+
     for (const variantName in strategy.variants) {
 
       const variant = strategy.variants[variantName];
       const variantJson = JSON.stringify(variant);
-      const normalizedVariantDisplayName = normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);
+      const normalizedVariantDisplayName = variantCount === 1
+        ? normalizeDisplayName(`${strategyName} ${variantJson}`)
+        : normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);
       const normalizedVariantName = normalize(strategyName, variantName);
       console.log("normalizedVariantName", normalizedVariantName);
 

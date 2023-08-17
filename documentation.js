@@ -1,6 +1,6 @@
 import { helpers } from "./helpers.js";
 
-export const examples = [
+const examples = [
   {
     name: "_mod(level, 0)",
     func: level => helpers._mod(level, 0),
@@ -114,8 +114,9 @@ function addDieValueExampleTable() {
   addMarkdownTable(markdown);
 }
 
-export function addDocumentation() {
+function addDocumentation() {
   addDieValueExampleTable();
   addByLevelExampleTable();
 }
 
+addDocumentation();

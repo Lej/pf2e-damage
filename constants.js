@@ -9,6 +9,7 @@ constants.degreesOfSuccess = [constants.criticalSuccess, constants.success, cons
 
 // https://www.reddit.com/r/Pathfinder2e/comments/cw8ys6/2hweapon_fighter_analysis_exacting_strike_vs/
 constants.defaultInput = {
+  name: "Default",
   strategies: {
     "Strike, Power Attack": {
       variants: {

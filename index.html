@@ -8,8 +8,6 @@
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
       mermaid.initialize({ startOnLoad: false });
     </script>
-    <!-- Marked -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Toastify -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
@@ -27,14 +25,32 @@
     </div>
     <div class="container-fluid">
       <div class="row">
-        <div class="d-flex flex-row align-items-center gap-2">
-          <h1>Input</h1>
-          <button type="button" class="btn btn-primary" id="simulate">Run</button>
+        <div class="col">
+          <div class="w-100" id="files">
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Default</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">+</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="d-flex my-2">
+            <button type="button" class="btn btn-primary" id="simulate">Save and Run</button>
+          </div>
         </div>
       </div>
       <div class="row">
         <div class="col-4">
-          <textarea class="form-control h-75" id="input"></textarea>
+          <textarea class="form-control h-100 input-min-height" id="input"></textarea>
         </div>
         <div class="col-8">
           <pre class="mermaid" id="mermaid"></pre>
@@ -44,13 +60,13 @@
     <hr/>
     <div class="container-fluid" id="output">
       <div class="row">
-        <h1>Output</h1>
+        <!--<h1>Output</h1>-->
       </div>
     </div>
     <hr/>
-    <div class="container-fluid" id="documentation">
-      <div class="row">
-        <h1>Documentation</h1>
+    <div class="container-fluid">
+      <div class="d-flex justify-content-center">
+        <a href="documentation.html" target="_blank">Documentation</a>
       </div>
     </div>
   </body>

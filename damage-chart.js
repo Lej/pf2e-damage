@@ -1,6 +1,6 @@
 const autocolors = window['chartjs-plugin-autocolors'];
 
-export function updateDamageChart(datas) {
+export function getDamageChart(datas) {
   const ctx = document.createElement("canvas");
 
   const tooltips = [];
@@ -20,11 +20,28 @@ export function updateDamageChart(datas) {
   new Chart(ctx, {
     type: "line",
     data: {
-      labels: [...Array(20).keys()].map(x => `Level ${x + 1}`),
+      labels: [...Array(20).keys()].map(x => `${x + 1}`),
       datasets: datasets
     },
     options: {
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Level"
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Average Damage"
+          }
+        }
+      },
       plugins: {
+        legend: {
+          position: "right"
+        },
         tooltip: {
           callbacks: {
             label: x => tooltips[x.datasetIndex][x.dataIndex]
@@ -37,7 +54,8 @@ export function updateDamageChart(datas) {
     ]
   });
 
-  const graph = document.getElementById("graph");
+  return ctx;
+  /*const graph = document.getElementById("graph");
   if (!!graph) {
     graph.remove();
   }
@@ -52,7 +70,7 @@ export function updateDamageChart(datas) {
   row.appendChild(col);
 
   const container = document.getElementById("output");
-  container.appendChild(row);
+  container.appendChild(row);*/
 }
 
 /*

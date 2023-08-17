@@ -15,3 +15,7 @@
   height: 3em;
   background-color: #2255BB;
 }
+
+.input-min-height {
+  min-height: 400px !important;
+}

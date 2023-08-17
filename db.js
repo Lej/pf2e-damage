@@ -111,10 +111,9 @@ function updateFileNavivation(db) {
     ul.appendChild(li);
   }
 
-  const add = document.createElement("li");
+  const add = document.createElement("button");
   add.innerText = "+";
   add.className = "nav-item nav-link";
-  add.role = "button";
   add.onclick = () => {
     const db = getDb();
     const name = addFile(db);

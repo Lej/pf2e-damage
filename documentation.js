@@ -49,6 +49,23 @@ const examples = [
     name: "_powerAttack(level)",
     func: level => helpers._powerAttack(level),
   },
+  {
+    name: "_resistance(level, 'min')",
+    func: level => helpers._resistance(level, 'min'),
+  },
+  {
+    name: "_resistance(level, 'max')",
+    func: level => helpers._resistance(level, 'max'),
+  },
+
+  {
+    name: "_weakness(level, 'min')",
+    func: level => helpers._weakness(level, 'min'),
+  },
+  {
+    name: "_weakness(level, 'max')",
+    func: level => helpers._weakness(level, 'max'),
+  },
 ];
 
 function addMarkdownTable(markdown) {
@@ -74,21 +91,34 @@ function addMarkdownTable(markdown) {
   container.appendChild(row);
 }
 
+function safe(func, level) {
+  try {
+    return func(level);
+  } catch {
+    return "";
+  }
+}
+
 function addByLevelExampleTable() {
 
-  const lines = Array(22).fill("");
+  const minLevel = -2;
+  const maxLevel = 24;
+  const numLevels = maxLevel - minLevel + 1;
+  const lines = Array(numLevels + 2).fill("");
 
   lines[0] += "| Level ";
   lines[1] += "| -";
-  for (let level = 1; level <= 20; level++) {
-    lines[level + 1] += `| **${level}** `;
+  for (let level = minLevel; level <= maxLevel; level++) {
+    const index = level - minLevel + 2;
+    lines[index] += `| **${level}** `;
   }
 
   for (const example of examples) {
     lines[0] += `| ${example.name} `;
     lines[1] += `| - `;
-    for (let level = 1; level <= 20; level++) {
-      lines[level + 1] += `| ${example.func(level)} `;
+    for (let level = minLevel; level <= maxLevel; level++) {
+      const index = level - minLevel + 2;
+      lines[index] += `| ${safe(example.func, level)} `;
     }
   }
 

@@ -98,9 +98,9 @@ export const helpers = {
     throw new Error(`(Greater) weapon specialization not implemented: ${type}`);
   },
   _powerAttack: (level) => cases(level, [[1,1],[10,2],[18,3]]),
-  _dieValueAvg: (sides) => (sides + 1) / 2,
-  _dieValueMin: (sides) => 1,
-  _dieValueMax: (sides) => sides,
+  _dAvg: (sides) => (sides + 1) / 2,
+  _dMin: (sides) => 1,
+  _dMax: (sides) => sides,
   _resistance: resistance,
   _weakness: resistance
 }

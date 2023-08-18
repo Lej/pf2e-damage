@@ -99,7 +99,7 @@ function safe(func, level) {
   }
 }
 
-function addByLevelExampleTable() {
+function addExampleByLevelTable() {
 
   const minLevel = -2;
   const maxLevel = 24;
@@ -130,23 +130,23 @@ function addByLevelExampleTable() {
   addMarkdownTable(markdown);
 }
 
-function addDieValueExampleTable() {
+function addExampleDiceTable() {
 
   let markdown = "";
-  markdown += "| _dieValue(sides) | Min | Max | Average |\n";
+  markdown += "| _d(sides) | Average | Min | Max |\n";
   markdown += "| - | - | - | - |\n";
 
   const examples = [4, 6, 8, 10, 12];
   for (const sides of examples) {
-    markdown += `| **${sides}** | ${helpers._dieValueMin(sides)} | ${helpers._dieValueMax(sides)} | ${helpers._dieValueAvg(sides)} |\n`
+    markdown += `| **${sides}** | ${helpers._dAvg(sides)} | ${helpers._dMin(sides)} | ${helpers._dMax(sides)} |\n`
   }
 
   addMarkdownTable(markdown);
 }
 
 function addDocumentation() {
-  addDieValueExampleTable();
-  addByLevelExampleTable();
+  addExampleDiceTable();
+  addExampleByLevelTable();
 }
 
 addDocumentation();

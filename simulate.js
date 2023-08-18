@@ -17,7 +17,7 @@ function getHelpers() {
 function getVariantVariableFunctions(variant, variableNames, helperNames) {
   const variableFunctions = {};
   for (const variableName of variableNames) {
-    variableFunctions[variableName] = new Function(...helperNames, "level", "_dieValue", `return ${variant[variableName]}`);
+    variableFunctions[variableName] = new Function(...helperNames, "level", "_d", `return ${variant[variableName]}`);
   }
   console.log("variableFunctions", variableFunctions);
   return variableFunctions;
@@ -166,7 +166,7 @@ async function getDamage(input) {
     const dcFunctions = getDcFunctions(strategy, degreeOfSuccessParameterNames);
 
     const transitions = getTransitions(strategy);
-    const damageParameterNames = [...helperNames, ...variantVariableNames, "level", "_dieValue"];
+    const damageParameterNames = [...helperNames, ...variantVariableNames, "level", "_d"];
     const damageFunctions = getDamageFunctions(transitions, damageParameterNames);
 
     // Variants
@@ -187,9 +187,9 @@ async function getDamage(input) {
 
           const state = strategy.states[stateName];
 
-          const variantVariableValuesAvg = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dieValueAvg);
-          const variantVariableValuesMin = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dieValueMin);
-          const variantVariableValuesMax = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dieValueMax);
+          const variantVariableValuesAvg = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dAvg);
+          const variantVariableValuesMin = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMin);
+          const variantVariableValuesMax = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMax);
 
           const damageParameterValuesAvg = [...helperImpls, ...variantVariableValuesAvg, level, (sides) => (sides + 1) / 2];
           const damageParameterValuesMin = [...helperImpls, ...variantVariableValuesMin, level, (sides) => 1];

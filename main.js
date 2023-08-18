@@ -3,7 +3,7 @@ import { updateDiagram } from "./diagram.js";
 import { simulate } from "./simulate.js";
 import { getDamageChart } from "./damage-chart.js";
 import { hideLoadingBar } from "./loading-bar.js";
-import { setGraph as setDamageChart, setError } from "./output.js";
+import { setChart as setDamageChart, setError } from "./output.js";
 import { init, save } from "./db.js"
 
 async function click() {

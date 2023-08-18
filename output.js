@@ -33,11 +33,10 @@ export function setError(text) {
   const div = document.createElement("div");
   div.className = "alert alert-danger";
   div.appendChild(pre);
-  //output.innerHTML = escapeHtml(text);
   output.appendChild(div);
 }
 
-export function setGraph(graph) {
+export function setChart(chart) {
   const output = getAndResetOutputElement();
-  output.appendChild(graph);
+  output.appendChild(chart);
 }

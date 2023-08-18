@@ -2,20 +2,6 @@ import { constants } from "./constants.js";
 import { helpers } from "./helpers.js";
 import { getTotal, getLoadingBar} from "./loading-bar.js";
 
-/*
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function roll(number, sides) {
-  let sum = 0;
-  for (let i = 0; i < number; i++) {
-    sum += getRandomInt(sides) + 1;
-  }
-  return sum;
-}
-*/
-
 function getHelpers() {
   const helperNames = [];
   const helperImpls = [];
@@ -44,34 +30,8 @@ function getVariantVariableValues(variableNames, variableFunctions, helperImpls,
     const value = fn(...helperImpls, level, dieValueFunction);
     variableValues.push(value);
   }
-  //console.log("variableValues", variableValues);
   return variableValues;
 }
-
-/*
-function getTransitions(strategy) {
-  const transitions = {};
-  for (const stateName in strategy.states) {
-    const state = strategy.states[stateName];
-    if (!state.transitions) {
-      transitions[stateName] = {
-        "critical-success": null,
-        "success": null,
-        "failure": null,
-        "critical-failure": null,
-      };
-    } else {
-      transitions[stateName] = {
-        "critical-success": state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"] || null,
-        "success": state.transitions["success"] || state.transitions["else"] || null,
-        "failure": state.transitions["failure"] || state.transitions["else"] || null,
-        "critical-failure": state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"] || null,
-      };
-    }
-  }
-  return transitions;
-}
-*/
 
 function getCheckFunctions(strategy, variableNames) {
   const functions = {};
@@ -199,7 +159,6 @@ async function getDamage(input) {
     results[strategyName] = {};
 
     const strategy = input.strategies[strategyName];
-    //const transitions = getTransitions(strategy);
     const variantVariableNames = getVariantVariableNames(strategy);
 
     const degreeOfSuccessParameterNames = [...helperNames, ...variantVariableNames, "level", "d20"];
@@ -222,8 +181,6 @@ async function getDamage(input) {
       for (let level = 1; level <= 20; level++) {
 
         results[strategyName][variantName][level] = {};
-
-        //console.log("level", level);
 
         // States
         for (const stateName in strategy.states) {
@@ -322,49 +279,6 @@ function getDamageSummary(states, stateName, chance) {
   result.max += childMax;
 
   return result;
-
-  /*
-  return  + getAvgDamage(states, state)
-
-  let total = 0;
-  let damage = 0;
-
-  const degreesOfSuccess = ["critical-success", "success", "failure", "critical-failure"];
-  for (const degreeOfSuccess of degreesOfSuccess) {
-    const state = current[degreeOfSuccess];
-    total += state.rolls.length;
-    damage += state.rolls.length * state.damage.avg;
-  }
-
-  const average = damage / total;
-  return average;
-  */
-
-  /*
-  const criticalSuccess = current["critical-success"];
-  const success = current["success"];
-  const failure = current["failure"];
-  const criticalFailure = current["critical-failure"];
-
-  const numCriticalSuccessRolls = criticalSuccess.rolls.length;
-  const numSuccessRolls = success.rolls.length;
-  const numFailureRolls = failure.rolls.length;
-  const numCriticalFailureRolls = criticalFailure.rolls.length;
-
-  const numRolls = numCriticalSuccessRolls + numSuccessRolls + numFailureRolls + numCriticalFailureRolls;
-
-  const chanceCriticalSuccess = numCriticalFailureRolls / numRolls;
-  const chanceSuccess = numSuccessRolls / numRolls;
-  const chanceFailure = numFailureRolls / numRolls;
-  const chanceCriticalFailure = numCriticalFailureRolls / numRolls;
-
-  const damageCriticalSuccess = chanceCriticalSuccess * (criticalSuccess.damage.avg + getAvgDamage(states, states[criticalSuccess?.destination]));
-  const damageSuccess = chanceCriticalSuccess * (success.damage.avg + getAvgDamage(states, states[success?.destination]));
-  const damageFailure = chanceCriticalSuccess * (failure.damage.avg + getAvgDamage(states, states[failure?.destination]));
-  const damageCriticalFailure = chanceCriticalSuccess * (criticalFailure.damage.avg + getAvgDamage(states, states[criticalFailure?.destination]));
-
-  const damageTotal = damageCriticalSuccess + damageSuccess + damageFailure + damageCriticalFailure;
-  return damageTotal;*/
 }
 
 function getStart(states) {

@@ -8,8 +8,6 @@ function normalizeDisplayName(...args) {
   return args
     .filter(x => !!x)
     .map(x => x
-      //.replace(/{/g, "[")
-      //.replace(/}/g, "]")
       .replace(/{/g, "")
       .replace(/}/g, "")
       .replace(/:+/g, " =")
@@ -39,11 +37,7 @@ export async function updateDiagram(input) {
     for (const variantName in strategy.variants) {
 
       const variant = strategy.variants[variantName];
-      //const variantJson = JSON.stringify(variant);
       const variantJson = JSON.stringify(variant, null, 2);
-      /*const normalizedVariantDisplayName = variantCount === 1
-        ? normalizeDisplayName(`${strategyName} ${variantJson}`)
-        : normalizeDisplayName(`${strategyName} (${variantName}) ${variantJson}`);*/
       const normalizedVariantDisplayName = variantCount === 1
         ? normalizeDisplayName(`${strategyName}`)
         : normalizeDisplayName(`${strategyName} (${variantName})`);
@@ -57,9 +51,12 @@ export async function updateDiagram(input) {
 
       diagram += `    ${normalizedVariantName}: ${normalizedVariantDisplayName}\n`;
 
-      diagram += `        note right of ${normalizedVariantName}\n`;
-      diagram += `            ${normalizeDisplayName(variantJson)}\n`;
-      diagram += `        end note\n\n`;
+      const normalizedVariantJsonDisplayName = normalizeDisplayName(variantJson);
+      if (normalizedVariantJsonDisplayName.length > 0) {
+        diagram += `        note right of ${normalizedVariantName}\n`;
+        diagram += `            ${normalizedVariantJsonDisplayName}\n`;
+        diagram += `        end note\n\n`;
+      }
 
       diagram += `    [*] --> ${normalizedVariantName}\n\n`;
       diagram += `    state ${normalizedVariantName} {\n\n`;
@@ -76,11 +73,6 @@ export async function updateDiagram(input) {
         stateNames.add(normalizedStateName);
 
         diagram += `        ${normalizedStateName}: ${normalizedStateDisplayName}\n`;
-        /*
-        diagram += `        note right of ${normalizedStateName}\n`;
-        diagram += `            ${state.check} vs ${state.dc}\n`;
-        diagram += `        end note\n\n`;
-        */
 
         if (strategy.start === stateName) {
           diagram += `        [*] --> ${normalizedStateName}\n\n`;

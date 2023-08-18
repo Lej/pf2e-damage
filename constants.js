@@ -71,7 +71,7 @@ constants.defaultInput = {
           }
         },
         "Strike": {
-          check: "x => x._d20 + x.attack(x) + x.map",
+          check: "x => x._d20 + x.attack(x) + x._cases(x._level, [[1,2*x.map],[6,x.map]])",
           dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {

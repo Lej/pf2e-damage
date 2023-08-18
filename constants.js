@@ -18,9 +18,9 @@ constants.defaultInput = {
   functions: {
     attack: "x => x._mod(x._level) + x._prof(x._level, 'fighter') + x._level + x._potency(x._level)",
     strikeDmg: "x => x._weaponDamageDice(x._level) * x._d(x.die) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')",
-    strikeCritDmg: "x => 2 * (((x._weaponDamageDice(x._level) + 1) * x._d(x.fatal)) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter') + 2 * x._weaponDamageDice(x._level))",
+    strikeCritDmg: "x => 2 * (((x._weaponDamageDice(x._level) + 1) * x._d(x.fatal)) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')) + x._cases(x._level, [[1,0],[5,2*x._weaponDamageDice(x._level)]])",
     powerAttackDmg: "x => (x._weaponDamageDice(x._level) + x._powerAttack(x._level)) * x._d(x.die) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')",
-    powerAttackCritDmg: "x => 2 * ((x._weaponDamageDice(x._level) + x._powerAttack(x._level) + 1) * x._d(x.fatal) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter') + 2 * x._weaponDamageDice(x._level))",
+    powerAttackCritDmg: "x => 2 * ((x._weaponDamageDice(x._level) + x._powerAttack(x._level) + 1) * x._d(x.fatal) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')) + x._cases(x._level, [[1,0],[5,2*x._weaponDamageDice(x._level)]])",
     ac: "x => x._ac(x._level, 'moderate')",
   },
   strategies: {

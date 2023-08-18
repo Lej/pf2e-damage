@@ -196,7 +196,12 @@ function getDegreeOfSuccessTooltip(state) {
     return `${percent}%`;
   });
 
-  return `[${intervals.join(",")}] [${percents.join(",")}]`;
+  const minMax = constants.degreesOfSuccessReverse.map(degreeOfSuccess => {
+    const dos = state[degreeOfSuccess];
+    return `${dos.min}-${dos.max}`
+  });
+
+  return `[${intervals.join(",")}] [${percents.join(",")}] [${minMax.join(",")}]`;
 }
 
 function getDamageSummary(states, stateName, chance) {

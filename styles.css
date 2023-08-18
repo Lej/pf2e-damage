@@ -17,5 +17,9 @@
 }
 
 .input-min-height {
-  min-height: 400px !important;
+  min-height: 20vh !important;
+}
+
+.input-max-height {
+  max-height: 70vh !important;
 }

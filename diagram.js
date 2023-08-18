@@ -34,10 +34,13 @@ export async function updateDiagram(input) {
       variantCount++;
     }
 
-    for (const variantName in strategy.variants) {
+    const variants = strategy.variants || {
+      "Default": {}
+    };
 
-      const variant = strategy.variants[variantName];
-      const variantJson = JSON.stringify(variant, null, 2);
+    for (const variantName in variants) {
+
+      const variant = variants[variantName];
       const normalizedVariantDisplayName = variantCount === 1
         ? normalizeDisplayName(`${strategyName}`)
         : normalizeDisplayName(`${strategyName} (${variantName})`);
@@ -51,10 +54,19 @@ export async function updateDiagram(input) {
 
       diagram += `    ${normalizedVariantName}: ${normalizedVariantDisplayName}\n`;
 
-      const normalizedVariantJsonDisplayName = normalizeDisplayName(variantJson);
-      if (normalizedVariantJsonDisplayName.length > 0) {
+      if (input.constants) {
         diagram += `        note right of ${normalizedVariantName}\n`;
-        diagram += `            ${normalizedVariantJsonDisplayName}\n`;
+        for (const constantName in input.constants) {
+          diagram += `            ${normalizeDisplayName(constantName)} = ${normalizeDisplayName(input.constants[constantName]?.toString())}\n`;
+        }
+        diagram += `        end note\n\n`;
+      }
+
+      if (input.functions) {
+        diagram += `        note right of ${normalizedVariantName}\n`;
+        for (const functionName in input.functions) {
+          diagram += `            ${normalizeDisplayName(functionName)} = ${normalizeDisplayName(input.functions[functionName]?.toString())}\n`;
+        }
         diagram += `        end note\n\n`;
       }
 
@@ -116,4 +128,9 @@ export async function updateDiagram(input) {
   diagramElement.innerHTML = diagram;
   diagramElement.removeAttribute("data-processed");
   await mermaid.run();
+
+  const svg = diagramElement.children[0];
+  const viewBox = svg.attributes["viewBox"].value;
+  const width = viewBox.replace(/^\S+\s+\S+\s/, "").replace(/\s+\S+$/, "");
+  svg.setAttribute("width", width);
 }

@@ -6,7 +6,10 @@
     <!-- Mermaid -->
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-      mermaid.initialize({ startOnLoad: false });
+      mermaid.initialize({
+        startOnLoad: false,
+        useMaxWidth: false,
+      });
     </script>
     <!-- Toastify -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -38,10 +41,10 @@
       </div>
       <div class="row">
         <div class="col-4">
-          <textarea class="form-control h-100 input-min-height" id="input"></textarea>
+          <textarea class="form-control h-100 input-min-height input-max-height" id="input"></textarea>
         </div>
         <div class="col-8">
-          <pre class="mermaid" id="mermaid"></pre>
+          <pre class="mermaid form-control input-max-height" id="mermaid"></pre>
         </div>
       </div>
     </div>

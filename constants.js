@@ -6,6 +6,7 @@ constants.failure = "failure";
 constants.criticalFailure = "critical-failure";
 
 constants.degreesOfSuccess = [constants.criticalSuccess, constants.success, constants.failure, constants.criticalFailure];
+constants.degreesOfSuccessReverse = constants.degreesOfSuccess.reverse();
 
 constants.defaultInput = {
   name: "Default",

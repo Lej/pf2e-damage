@@ -161,8 +161,11 @@ async function getDamage(input) {
             dos.count = dos.rolls.length;
             dos.chance = dos.count / result.count;
             result.total += dos.avg * dos.count;
-            result.min = Math.min(result.min || Number.MAX_SAFE_INTEGER, dos.min);
-            result.max = Math.max(result.max || Number.MIN_SAFE_INTEGER, dos.max);
+            function coalesce(a, b) {
+              return !!a || a === 0 ? a : b;
+            }
+            result.min = Math.min(coalesce(result.min, Number.MAX_SAFE_INTEGER), dos.min);
+            result.max = Math.max(coalesce(result.max, Number.MIN_SAFE_INTEGER), dos.max);
           }
           result.avg = result.total / result.count;
 
@@ -172,8 +175,28 @@ async function getDamage(input) {
     }
   }
 
-  console.log("results", results);
   return results;
+}
+
+function getDegreeOfSuccessTooltip(state) {
+
+  const intervals = constants.degreesOfSuccessReverse.map(degreeOfSuccess => {
+    const rolls = state[degreeOfSuccess].rolls;
+    if (rolls.length === 1) {
+      return `${rolls[0]}`;
+    } else if (rolls.length > 1) {
+      return `${rolls[0]}-${rolls[rolls.length - 1]}`;
+    } else {
+      return "-";
+    }
+  });
+
+  const percents = constants.degreesOfSuccessReverse.map(degreeOfSuccess => {
+    const percent = 100 * (state[degreeOfSuccess].rolls.length / 20)
+    return `${percent}%`;
+  });
+
+  return `[${intervals.join(",")}] [${percents.join(",")}]`;
 }
 
 function getDamageSummary(states, stateName, chance) {
@@ -220,6 +243,9 @@ function getStart(states) {
 }
 
 function getChartData(damage) {
+
+  console.log("damage", damage);
+
   const results = [];
   for (const strategyName in damage) {
     const strategy = damage[strategyName];
@@ -238,6 +264,7 @@ function getChartData(damage) {
         avg: [],
         min: [],
         max: [],
+        dos: [],
       };
       for (let level = 1; level <= 20; level++) {
         const states = variant[level];
@@ -246,6 +273,13 @@ function getChartData(damage) {
         result.avg.push(summary.avg);
         result.min.push(summary.min);
         result.max.push(summary.max);
+        const stateTooltipLines = [];
+        for (const stateName in states) {
+          const state = states[stateName];
+          const stateTooptipDos = getDegreeOfSuccessTooltip(state);
+          stateTooltipLines.push(`${stateName}: ${stateTooptipDos}`);
+        }
+        result.dos.push(stateTooltipLines);
       }
       results.push(result);
     }

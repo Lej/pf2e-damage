@@ -2,100 +2,6 @@ import { constants } from "./constants.js";
 import { helpers } from "./helpers.js";
 import { getTotal, getLoadingBar} from "./loading-bar.js";
 
-function getVariantVariableFunctions(variant, variableNames, helperNames) {
-  const variableFunctions = {};
-  for (const variableName of variableNames) {
-    variableFunctions[variableName] = new Function(...helperNames, "level", "_d", `return ${variant[variableName]}`);
-  }
-  console.log("variableFunctions", variableFunctions);
-  return variableFunctions;
-}
-
-function getVariantVariableValues(variableNames, variableFunctions, helperImpls, level, dieValueFunction) {
-  const variableValues = [];
-  for (const variableName of variableNames) {
-    const fn = variableFunctions[variableName];
-    const value = fn(...helperImpls, level, dieValueFunction);
-    variableValues.push(value);
-  }
-  return variableValues;
-}
-
-/*
-function getCheckFunctions(strategy, variableNames) {
-  const functions = {};
-  for (const stateName in strategy.states) {
-    const state = strategy.states[stateName];
-    const code = `return ${state.check};`;
-    console.log("code", code);
-    functions[stateName] = new Function(...variableNames, code);
-  }
-  return functions;
-}
-
-function getDcFunctions(strategy, variableNames) {
-  const functions = {};
-  for (const stateName in strategy.states) {
-    const state = strategy.states[stateName];
-    const code = `return ${state.dc};`;
-    console.log("code", code);
-    functions[stateName] = new Function(...variableNames, code);
-  }
-  return functions;
-}
-*/
-
-/*
-function getTransitions(strategy) {
-  const transitions = {};
-  for (const stateName in strategy.states) {
-    const state = strategy.states[stateName];
-    const stateTransitions = {
-      "critical-success": state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"],
-      "success": state.transitions["success"] || state.transitions["else"],
-      "failure": state.transitions["failure"] || state.transitions["else"],
-      "critical-failure": state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"]
-    };
-    for (const degreeOfSuccess of constants.degreesOfSuccess) {
-      if (!!state.destination) {
-        const transition = stateTransitions[degreeOfSuccess] || {};
-        transition.destination = transition.destination || state.destination;
-        stateTransitions[degreeOfSuccess] = transition;
-      }
-
-    }
-    transitions[stateName] = stateTransitions;
-  }
-  console.log("transitions", transitions);
-  return transitions;
-}
-*/
-
-/*
-function getDamageFunctions(transitions, parameterNames) {
-  const functions = {};
-  for (const stateName in transitions) {
-    functions[stateName] = {};
-    for (const degreeOfSuccess of constants.degreesOfSuccess) {
-      functions[stateName][degreeOfSuccess] = new Function(...parameterNames, `return ${transitions[stateName][degreeOfSuccess]?.damage || 0};`);
-    }
-  }
-  return functions;
-}
-*/
-
-function getVariantVariableNames(strategy) {
-  const variantVariableNames = [];
-  for (const variantName in strategy.variants) {
-    const variant = strategy.variants[variantName];
-    for (let variableName in variant) {
-      variantVariableNames.push(variableName);
-    }
-    console.log("variantVariableNames", variantVariableNames);
-    return variantVariableNames;
-  }
-}
-
 function getDegreeOfSuccess(roll, value, dc) {
   let outcome = null;
   if (value >= dc + 10) {
@@ -121,21 +27,6 @@ function getDegreeOfSuccess(roll, value, dc) {
   } else {
     return "critical-failure";
   }
-}
-
-function getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variableValues, d20) {
-
-    const checkResult = checkFunctions[stateName](...variableValues);
-    if (typeof(checkResult) !== "number") {
-      throw new Error(`Expected state '${stateName}' check to return a number but got '${checkResult}'.`);
-    }
-
-    const dcResult = dcFunctions[stateName](...variableValues);
-    if (typeof(dcResult) !== "number") {
-      throw new Error(`Expected state '${stateName}' DC to return a number but got '${dcResult}'.`);
-    }
-
-    return getDegreeOfSuccess(d20, checkResult, dcResult);
 }
 
 function createContext(parent, child) {
@@ -228,15 +119,7 @@ async function getDamage(input) {
         for (const stateName in strategy.states) {
 
           const state = strategy.states[stateName];
-/*
-          const variantVariableValuesAvg = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dAvg);
-          const variantVariableValuesMin = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMin);
-          const variantVariableValuesMax = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMax);
 
-          const damageParameterValuesAvg = [...helperImpls, ...variantVariableValuesAvg, level, (sides) => (sides + 1) / 2];
-          const damageParameterValuesMin = [...helperImpls, ...variantVariableValuesMin, level, (sides) => 1];
-          const damageParameterValuesMax = [...helperImpls, ...variantVariableValuesMax, level, (sides) => sides];
-*/
           const result = {
             start: state.start || false,
           }

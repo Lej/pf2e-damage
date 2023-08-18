@@ -1,5 +1,18 @@
 const autocolors = window['chartjs-plugin-autocolors'];
 
+// Note: changes to the plugin code is not reflected to the chart, because the plugin is loaded at chart construction time and editor changes only trigger an chart.update().
+const plugin = {
+  id: 'customCanvasBackgroundColor',
+  beforeDraw: (chart, args, options) => {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color || '#99ffff';
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  }
+};
+
 export function getDamageChart(chartData) {
 
   console.log("chartData", chartData);
@@ -71,11 +84,15 @@ export function getDamageChart(chartData) {
             label: x => tooltips[x.datasetIndex].labels[x.dataIndex],
             afterBody: x => tooltips[x[0].datasetIndex].afterBodies[x[0].dataIndex],
           }
+        },
+        customCanvasBackgroundColor: {
+          color: 'white',
         }
       }
     },
     plugins: [
-      autocolors
+      autocolors,
+      plugin
     ]
   });
 

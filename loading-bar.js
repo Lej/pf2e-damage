@@ -2,7 +2,7 @@ export function getTotal(input) {
   let total = 0;
   for (const strategyName in input.strategies) {
     const strategy = input.strategies[strategyName];
-    total += Object.keys(strategy.variants).length * Object.keys(strategy.states).length * 20/*Levels*/ * 20/*Rolls*/;
+    total += Object.keys(strategy.states).length * 20/*Levels*/ * 20/*Rolls*/;
   }
   return total;
 }

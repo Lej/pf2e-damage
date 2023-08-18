@@ -9,202 +9,175 @@ constants.degreesOfSuccess = [constants.criticalSuccess, constants.success, cons
 
 constants.defaultInput = {
   name: "Default",
+  constants: {
+    die: 10,
+    fatal: 12,
+    map: -5
+  },
+  functions: {
+    attack: "x => x._mod(x._level) + x._prof(x._level, 'fighter') + x._level + x._potency(x._level)",
+    strikeDmg: "x => x._weaponDamageDice(x._level) * x._d(x.die) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')",
+    strikeCritDmg: "x => 2 * (((x._weaponDamageDice(x._level) + 1) * x._d(x.fatal)) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter') + 2 * x._weaponDamageDice(x._level))",
+    powerAttackDmg: "x => (x._weaponDamageDice(x._level) + x._powerAttack(x._level)) * x._d(x.die) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter')",
+    powerAttackCritDmg: "x => 2 * ((x._weaponDamageDice(x._level) + x._powerAttack(x._level) + 1) * x._d(x.fatal) + x._mod(x._level) + x._weaponSpecialization(x._level, 'fighter') + 2 * x._weaponDamageDice(x._level))",
+    ac: "x => x._ac(x._level, 'moderate')",
+  },
   strategies: {
     "Strike, Power Attack": {
-      variants: {
-        "Normal": {
-          attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
-          strikeDmg: "_weaponDamageDice(level) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _d(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          powerAttackDmg: "(_weaponDamageDice(level) + _powerAttack(level)) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          powerAttackCritDmg: "2 * ((_weaponDamageDice(level) + _powerAttack(level) + 1) * _d(12) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level, 'moderate')",
-          map: -5
-        }
-      },
       states: {
         "Strike": {
           start: true,
           destination: "Power Attack",
-          check: "d20 + attack",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x)",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         },
         "Power Attack": {
-          check: "d20 + attack + map",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x) + x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "powerAttackCritDmg",
+              damage: "x => x.powerAttackCritDmg(x)",
             },
             "success": {
-              damage: "powerAttackDmg",
+              damage: "x => x.powerAttackDmg(x)",
             }
           }
         }
       }
     },
     "Power Attack, Strike": {
-      variants: {
-        "Normal": {
-          attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
-          strikeDmg: "_weaponDamageDice(level) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _d(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          powerAttackDmg: "(_weaponDamageDice(level) + _powerAttack(level)) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          powerAttackCritDmg: "2 * ((_weaponDamageDice(level) + _powerAttack(level) + 1) * _d(12) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level, 'moderate')",
-          map: -5
-        }
-      },
       states: {
         "Power Attack": {
           start: true,
           destination: "Strike",
-          check: "d20 + attack",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x)",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "powerAttackCritDmg",
+              damage: "x => x.powerAttackCritDmg(x)",
             },
             "success": {
-              damage: "powerAttackDmg",
+              damage: "x => x.powerAttackDmg(x)",
             }
           }
         },
         "Strike": {
-          check: "d20 + attack + map",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x) + x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         }
       }
     },
     "Strike, Strike, Strike": {
-      variants: {
-        "Normal": {
-          attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
-          strikeDmg: "_weaponDamageDice(level) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _d(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level, 'moderate')",
-          map: -5
-        }
-      },
       states: {
         "Strike #1": {
           start: true,
           destination: "Strike #2",
-          check: "d20 + attack",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x)",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         },
         "Strike #2": {
           destination: "Strike #3",
-          check: "d20 + attack + map",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x) + x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         },
         "Strike #3": {
-          check: "d20 + attack + 2 * map",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x) + 2 * x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         }
       }
     },
     "Strike, Exacting Strike, Strike": {
-      variants: {
-        "Normal": {
-          attack: "_mod(level) + _prof(level, 'fighter') + level + _potency(level)",
-          strikeDmg: "_weaponDamageDice(level) * _d(10) + _mod(level) + _weaponSpecialization(level, 'fighter')",
-          strikeCritDmg: "2 * (((_weaponDamageDice(level) + 1) * _d(12)) + _mod(level) + _weaponSpecialization(level, 'fighter') + 2 * _weaponDamageDice(level))",
-          ac: "_ac(level, 'moderate')",
-          map: -5
-        }
-      },
       states: {
         "Strike #1": {
           start: true,
           destination: "Exacting Strike",
-          check: "d20 + attack",
-          dc: "ac",
+          check: "x => x._d20 + x.attack(x)",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         },
         "Exacting Strike": {
-          destination: "Strike #2 (MAP -5)",
-          check: "d20 + attack + map",
-          dc: "ac",
+          destination: "Strike #2 (After Exacting Missing)",
+          check: "x => x._d20 + x.attack(x) + x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
-              destination: "Strike #2 (MAP -10)",
+              damage: "x => x.strikeCritDmg(x)",
+              destination: "Strike #2 (After Exacting Hit)",
             },
             "success": {
-              damage: "strikeDmg",
-              destination: "Strike #2 (MAP -10)",
+              damage: "x => x.strikeDmg(x)",
+              destination: "Strike #2 (After Exacting Hit)",
             }
           }
         },
-        "Strike #2 (MAP -5)": {
-          check: "d20 + attack + map",
-          dc: "ac",
+        "Strike #2 (After Exacting Missing)": {
+          check: "x => x._d20 + x.attack(x) + x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         },
-        "Strike #2 (MAP -10)": {
-          check: "d20 + attack + 2 * map",
-          dc: "ac",
+        "Strike #2 (After Exacting Hit)": {
+          check: "x => x._d20 + x.attack(x) + 2 * x.map",
+          dc: "x => x.ac(x)",
           transitions: {
             "critical-success": {
-              damage: "strikeCritDmg",
+              damage: "x => x.strikeCritDmg(x)",
             },
             "success": {
-              damage: "strikeDmg",
+              damage: "x => x.strikeDmg(x)",
             }
           }
         }

@@ -2,18 +2,6 @@ import { constants } from "./constants.js";
 import { helpers } from "./helpers.js";
 import { getTotal, getLoadingBar} from "./loading-bar.js";
 
-function getHelpers() {
-  const helperNames = [];
-  const helperImpls = [];
-  for (const helperName in helpers) {
-    helperNames.push(helperName);
-    helperImpls.push(helpers[helperName]);
-  }
-  console.log("helperNames", helperNames);
-  console.log("helperImpls", helperImpls);
-  return [helperNames, helperImpls];
-}
-
 function getVariantVariableFunctions(variant, variableNames, helperNames) {
   const variableFunctions = {};
   for (const variableName of variableNames) {
@@ -33,6 +21,7 @@ function getVariantVariableValues(variableNames, variableFunctions, helperImpls,
   return variableValues;
 }
 
+/*
 function getCheckFunctions(strategy, variableNames) {
   const functions = {};
   for (const stateName in strategy.states) {
@@ -54,7 +43,9 @@ function getDcFunctions(strategy, variableNames) {
   }
   return functions;
 }
+*/
 
+/*
 function getTransitions(strategy) {
   const transitions = {};
   for (const stateName in strategy.states) {
@@ -78,7 +69,9 @@ function getTransitions(strategy) {
   console.log("transitions", transitions);
   return transitions;
 }
+*/
 
+/*
 function getDamageFunctions(transitions, parameterNames) {
   const functions = {};
   for (const stateName in transitions) {
@@ -89,6 +82,7 @@ function getDamageFunctions(transitions, parameterNames) {
   }
   return functions;
 }
+*/
 
 function getVariantVariableNames(strategy) {
   const variantVariableNames = [];
@@ -144,13 +138,29 @@ function getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, variabl
     return getDegreeOfSuccess(d20, checkResult, dcResult);
 }
 
+function createContext(parent, child) {
+  const context = Object.assign({}, parent);
+  if (child.constants) {
+    for (const constantName in child.constants) {
+      context[constantName] = child.constants[constantName];
+    }
+  }
+  if (child.functions) {
+    for (const functionName in child.functions) {
+      const func = child.functions[functionName];
+      context[functionName] = new Function("x", `return (${func})(x);`);
+    }
+  }
+  return context;
+}
+
 async function getDamage(input) {
 
   let remaining = getTotal(input);
   const loadingBar = getLoadingBar(remaining);
 
-  // Helpers
-  const [helperNames, helperImpls] = getHelpers();
+  // Context
+  const context = createContext(helpers, input);
 
   // Strategies
   const results = {};
@@ -158,35 +168,67 @@ async function getDamage(input) {
 
     results[strategyName] = {};
 
+    // Check and DC functions
     const strategy = input.strategies[strategyName];
-    const variantVariableNames = getVariantVariableNames(strategy);
+    const stateInfo = {};
+    for (const stateName in strategy.states) {
+      const state = strategy.states[stateName];
 
-    const degreeOfSuccessParameterNames = [...helperNames, ...variantVariableNames, "level", "d20"];
-    const checkFunctions = getCheckFunctions(strategy, degreeOfSuccessParameterNames);
-    const dcFunctions = getDcFunctions(strategy, degreeOfSuccessParameterNames);
+      const criticalSuccess = state.transitions["critical-success"] || state.transitions["success"] || state.transitions["else"];
+      const success = state.transitions["success"] || state.transitions["else"];
+      const failure = state.transitions["failure"] || state.transitions["else"];
+      const criticalFailure = state.transitions["critical-failure"] || state.transitions["failure"] || state.transitions["else"];
 
-    const transitions = getTransitions(strategy);
-    const damageParameterNames = [...helperNames, ...variantVariableNames, "level", "_d"];
-    const damageFunctions = getDamageFunctions(transitions, damageParameterNames);
+      stateInfo[stateName] = {
+        check: new Function("x", `return (${state.check})(x);`),
+        dc: new Function("x", `return (${state.dc})(x);`),
+        transitions: {
+          "critical-success": {
+            damage: new Function("x", `return (${criticalSuccess?.damage || "x => 0"})(x)`),
+            destination: criticalSuccess?.destination || state.destination,
+          },
+          "success": {
+            damage: new Function("x", `return (${success?.damage || "x => 0"})(x)`),
+            destination: success?.destination || state.destination,
+          },
+          "failure": {
+            damage: new Function("x", `return (${failure?.damage || "x => 0"})(x)`),
+            destination: failure?.destination || state.destination,
+          },
+          "critical-failure": {
+            damage: new Function("x", `return (${criticalFailure?.damage || "x => 0"})(x)`),
+            destination: criticalFailure?.destination || state.destination
+          }
+        }
+      };
+    }
+    console.log("stateInfo", stateInfo);
+
+    const variants = strategy.variants || {
+      "Default": {}
+    };
 
     // Variants
-    for (const variantName in strategy.variants) {
+    for (const variantName in variants) {
 
       results[strategyName][variantName] = {};
 
-      const variant = strategy.variants[variantName];
-      const variantVariableFunctions = getVariantVariableFunctions(variant, variantVariableNames, helperNames);
+      // Variant Context
+      const variant = variants[variantName];
+      const variantContext = createContext(context, variant);
 
       // Levels
       for (let level = 1; level <= 20; level++) {
 
         results[strategyName][variantName][level] = {};
 
+        variantContext._level = level;
+
         // States
         for (const stateName in strategy.states) {
 
           const state = strategy.states[stateName];
-
+/*
           const variantVariableValuesAvg = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dAvg);
           const variantVariableValuesMin = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMin);
           const variantVariableValuesMax = getVariantVariableValues(variantVariableNames, variantVariableFunctions, helperImpls, level, helpers._dMax);
@@ -194,30 +236,33 @@ async function getDamage(input) {
           const damageParameterValuesAvg = [...helperImpls, ...variantVariableValuesAvg, level, (sides) => (sides + 1) / 2];
           const damageParameterValuesMin = [...helperImpls, ...variantVariableValuesMin, level, (sides) => 1];
           const damageParameterValuesMax = [...helperImpls, ...variantVariableValuesMax, level, (sides) => sides];
-
-          function getResult() {
-            const result = {
-              start: state.start || false,
-            };
-            for (const degreeOfSuccess of constants.degreesOfSuccess) {
-              result[degreeOfSuccess] = {
-                rolls: [],
-                destination: transitions[stateName][degreeOfSuccess]?.destination,
-                min: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMin),
-                avg: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesAvg),
-                max: damageFunctions[stateName][degreeOfSuccess](...damageParameterValuesMax),
-              }
-            }
-            return result;
+*/
+          const result = {
+            start: state.start || false,
           }
-
-          const result = getResult();
+          for (const degreeOfSuccess of constants.degreesOfSuccess) {
+            variantContext._d = helpers._dAvg;
+            const avg = stateInfo[stateName].transitions[degreeOfSuccess].damage(variantContext);
+            variantContext._d = helpers._dMin;
+            const min = stateInfo[stateName].transitions[degreeOfSuccess].damage(variantContext);
+            variantContext._d = helpers._dMax;
+            const max = stateInfo[stateName].transitions[degreeOfSuccess].damage(variantContext);
+            result[degreeOfSuccess] = {
+              rolls: [],
+              destination: stateInfo[stateName].transitions[degreeOfSuccess].destination,
+              avg: avg,
+              min: min,
+              max: max,
+            }
+          }
 
           // Rolls
           for (let d20 = 1; d20 <= 20; d20++) {
-            // Ok to use variantVariableValuesAvg?
-            const degreeOfSuccessParameterValues = [...helperImpls, ...variantVariableValuesAvg, level, d20];
-            const degreeOfSuccess = getCheckDegreeOfSuccess(stateName, checkFunctions, dcFunctions, degreeOfSuccessParameterValues, d20);
+
+            variantContext._d20 = d20;
+            const check = stateInfo[stateName].check(variantContext);
+            const dc = stateInfo[stateName].dc(variantContext);
+            const degreeOfSuccess = getDegreeOfSuccess(d20, check, dc);
 
             result[degreeOfSuccess].rolls.push(d20);
 
